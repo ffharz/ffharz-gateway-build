@@ -15,7 +15,7 @@ INPUT=gateways.csv
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
-while read domain nr name dns host ip fastdport bbmac v4mac v6mac dhcprange dhcpstart dhcpend
+while read domain nr name dns host ip fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
     if [ "$HOSTNAME" == "$name" ]; then
         config[domain]=$domain
@@ -50,22 +50,22 @@ modprobe batman-adv
 
 # fastd Config kopieren
 
-cp fastd/ /etc/fastd/
+cp fastd/. /etc/fastd/ -r
 
 # FastD-Config anpassen
-sed -i "s/10000/$fastdbbport/g" /etc/fastd/backbone/fastd.conf
-# sed -i "s/0.0.0.0/$ip/g" /etc/fastd/backbone/fastd.conf
-sed -i "s/00:00:00:00:00:00/$bbmac/g" /etc/fastd/backbone/fastd.conf
+sed -i "s/10000/${config[fastdbbport]}/g" /etc/fastd/backbone/fastd.conf
+# sed -i "s/0.0.0.0/${config[ip]}/g" /etc/fastd/backbone/fastd.conf
+sed -i "s/00:00:00:00:00:00/${config[bbmac]}/g" /etc/fastd/backbone/fastd.conf
 
-sed -i "s/10000/$fastdport/g" /etc/fastd/v4/fastd.conf
-# sed -i "s/0.0.0.0/$ip/g" /etc/fastd/v4/fastd.conf
-sed -i "s/00:00:00:00:00:00/$v4mac/g" /etc/fastd/v4/fastd.conf
+sed -i "s/10000/${config[fastdport]}/g" /etc/fastd/v4/fastd.conf
+# sed -i "s/0.0.0.0/${config[ip]}/g" /etc/fastd/v4/fastd.conf
+sed -i "s/00:00:00:00:00:00/${config[v4mac]}/g" /etc/fastd/v4/fastd.conf
 
-sed -i "s/10000/$fastdport/g" /etc/fastd/v6/fastd.conf
-# sed -i "s/0.0.0.0/$ip/g" /etc/fastd/v6/fastd.conf
-sed -i "s/00:00:00:00:00:00/$v6mac/g" /etc/fastd/v6/fastd.conf
+sed -i "s/10000/${config[fastdport]}/g" /etc/fastd/v6/fastd.conf
+# sed -i "s/0.0.0.0/${config[ip]}/g" /etc/fastd/v6/fastd.conf
+sed -i "s/00:00:00:00:00:00/${config[v6mac]}/g" /etc/fastd/v6/fastd.conf
 
 # FastD Secrets ablegen
-echo "secret "$fastdbbsec";" > /etc/fastd/backbone/secret.conf
-echo "secret "$fastdsec";" > /etc/fastd/ipv4/secret.conf
-echo "secret "$fastdsec";" > /etc/fastd/ipv6/secret.conf
+echo "secret \"${config[fastdbbsec]}\";" > /etc/fastd/backbone/secret.conf
+echo "secret \"${config[fastdsec]}\";" > /etc/fastd/v4/secret.conf
+echo "secret \"${config[fastdsec]}\";" > /etc/fastd/v6/secret.conf

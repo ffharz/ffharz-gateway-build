@@ -20,7 +20,7 @@ Installation von GIT:
 
 Repository clonen:
 
-    git clone https://githib.com/ffharz/ffharz-gateway-build.git
+    git clone https://github.com/ffharz/ffharz-gateway-build.git
 
 Anschließend in das Verzeichnis wechseln und die *install.sh* ausführbar machen:
 

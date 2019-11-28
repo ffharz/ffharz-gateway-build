@@ -69,3 +69,27 @@ sed -i "s/00:00:00:00:00:00/${config[v6mac]}/g" /etc/fastd/v6/fastd.conf
 echo "secret \"${config[fastdbbsec]}\";" > /etc/fastd/backbone/secret.conf
 echo "secret \"${config[fastdsec]}\";" > /etc/fastd/v4/secret.conf
 echo "secret \"${config[fastdsec]}\";" > /etc/fastd/v6/secret.conf
+
+#Public-Keys der Gateways der gleichen Domäne hinterlegen
+
+mkdir /etc/fastd/backbone/gateway
+
+OLDIFS=$IFS
+IFS=';'
+[ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
+while read domain nr name dns host ip fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
+do
+    if [ "${config[domain]}" == "$domain" ] && [ "$HOSTNAME" != "$name" ]; then
+        echo "key \"$fastdbbpub\";" > /etc/fastd/backbone/gateway/$name
+        echo "remote \"$dns\" port $fastdbbport;" >> /etc/fastd/backbone/gateway/$name
+    fi
+
+done < $INPUT
+IFS=$OLDIFS
+
+#FastD Autostart einrichten
+cp fastd@.service /etc/systemd/system/fastd@.service
+systemctl daemon-reload
+systemctl enable fastd@backbone
+systemctl enable fastd@v4
+systemctl enable fastd@v6

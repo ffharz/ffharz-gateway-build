@@ -1,0 +1,18 @@
+[Unit]
+Description=Fast and Secure Tunnelling Daemon (connection %I)
+Documentation=man:fastd(1)
+Documentation=http://fastd.readthedocs.org/
+PartOf=fastd.service
+ReloadPropagatedFrom=fastd.service
+
+[Service]
+Type=notify
+WorkingDirectory=/etc/fastd/%I
+ExecStart=/usr/bin/fastd --syslog-level info --syslog-ident fastd@%I -c /etc/fastd/%I/fastd.conf
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=5
+
+[Install]
+WantedBy=fastd.service

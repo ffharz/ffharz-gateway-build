@@ -1,1 +1,1 @@
-domain;nr;name;dns;host;ip;fastdport;fastdbbport;bbmac;v4mac;v6mac;dhcprange;dhcpstart;dhcpend;fastdbbsec;fastdbbpub;fastdbbsec;fastdbbpub
+domain;nr;name;dns;host;ip;ffip;ipv6;ipv6gw;ffipv6;fastdport;fastdbbport;bbmac;v4mac;v6mac;dhcprange;dhcpstart;dhcpend;fastdbbsec;fastdbbpub;fastdsec;fastdpub

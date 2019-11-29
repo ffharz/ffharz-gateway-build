@@ -89,9 +89,10 @@ Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden.
         post-up iptables -A POSTROUTING -t nat -j MASQUERADE
 
     iface vmbr0 inet6 static
-        # IPv6 des Servers eintragen
-        address  2a01:4f8:xxx:xxxx::x
+        # IPv6 des Servers +1 eintragen
+        address  2a01:4f8:xxx:xxxx::3
         netmask  64
+        up ip -6 route add 2a01:4f8:xxx:xxxx::/64 dev vmbr0
 
 Anschließend muss noch das IP-Forwarding aktivieren, damit die Pakete auch weitergeleitet werden.
 Dafür ist in der Datei */etc/sysctl.d/99-hetzner.conf* und/oder */etc/sysctl.conf* folgendes einzustellen:

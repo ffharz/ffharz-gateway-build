@@ -6,7 +6,7 @@
 # Software-Update und notwendige Pakete installieren
 apt update
 apt upgrade
-apt install batctl fastd bridge-utils
+apt install batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq
 
 # Config laden
 
@@ -15,7 +15,7 @@ INPUT=gateways.csv
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
-while read domain nr name dns host ip fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
+while read domain nr name dns host ip ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
     if [ "$HOSTNAME" == "$name" ]; then
         config[domain]=$domain
@@ -24,6 +24,10 @@ do
         config[dns]=$dns
         config[host]=$host
         config[ip]=$ip
+        config[ffip]=$ffip
+        config[ipv6]=$ipv6
+        config[ipv6gw]=$ipv6gw
+        config[ffipv6]=$ffipv6    
         config[fastdport]=$fastdport
         config[fastdbbport]=$fastdbbport
         config[bbmac]=$bbmac
@@ -70,7 +74,7 @@ echo "secret \"${config[fastdbbsec]}\";" > /etc/fastd/backbone/secret.conf
 echo "secret \"${config[fastdsec]}\";" > /etc/fastd/v4/secret.conf
 echo "secret \"${config[fastdsec]}\";" > /etc/fastd/v6/secret.conf
 
-#Public-Keys der Gateways der gleichen Domäne hinterlegen
+# Public-Keys der Gateways der gleichen Domäne hinterlegen
 
 mkdir /etc/fastd/backbone/gateway
 
@@ -87,9 +91,45 @@ do
 done < $INPUT
 IFS=$OLDIFS
 
-#FastD Autostart einrichten
+# FastD Autostart einrichten
 cp fastd@.service /etc/systemd/system/fastd@.service
 systemctl daemon-reload
 systemctl enable fastd@backbone
 systemctl enable fastd@v4
 systemctl enable fastd@v6
+
+# IPv6 und Netzwerkbridge einrichten
+echo "
+
+iface ens18 inet6 static
+  address ${config[ipv6]}
+  netmask 64
+  gateway ${config[ipv6gw]}
+
+auto br-ffharz
+iface br-ffharz inet6 static
+    bridge-ports none
+    address ${config[ffipv6]}
+    netmask 48
+ 
+    post-up ip addr add ${config[ipv6]}/64 dev br-ffharz
+    post-up ip route add ${config[ipv6gw]::-1}/64 dev br-ffharz
+    pre-down ip addr del ${config[ipv6]}/64 dev br-ffharz
+    pre-down ip route del ${config[ipv6gw]::-1}/64 dev br-ffharz
+ 
+iface br-ffharz inet static
+    address ${config[ffip]}
+    netmask 255.255.0.0
+ 
+allow-hotplug bat0
+iface bat0 inet6 manual
+    pre-up modprobe batman-adv
+    pre-up batctl if add mesh-vpn
+    pre-up batctl gw server
+    up ip link set \$IFACE up
+    post-up brctl addif br-ffharz \$IFACE
+    post-up batctl it 10000
+    post-up batctl gw server 1000MBit/1000MBit
+ 
+    pre-down brctl delif br-ffharz \$IFACE || true
+    down ip link set \$IFACE down" >> /etc/network/interfaces

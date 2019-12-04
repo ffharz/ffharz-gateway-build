@@ -3,13 +3,25 @@
 ## Dieses Script richtet einen Freifunk Harz Gateway automatisiert ein
 ## Voraussetzung ist ein "jungfreuliches" Debian 10 Buster
 
-# Software-Update und notwendige Pakete installieren
-apt update
-apt upgrade
-apt install batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq
+if [-d "config/"] ; then 
+    echo "Config-Verzeichnis vorhanden, soll trotzdem weiter gemacht werden? (wird gelöscht!)"	
+    read -p"Beenden (j/n)? " force
 
-# Config laden
+    if [ "$force" != "j" ] ; then
+        exit 1
+    fi
+fi
 
+fullrun=true
+read -p"Soll nur das Config-Verzeichnis aufgebaut werden, ohne das Systemdatei geändert werden? (j/n) " response
+if [ "$response" != "n" ] ; then
+    fullrun=false
+fi
+
+echo "- Start"
+
+## Config laden
+echo "- Gateway-Konfiguration aus gateways.csv laden"
 declare -A config
 INPUT=gateways.csv
 OLDIFS=$IFS
@@ -46,90 +58,174 @@ do
 done < $INPUT
 IFS=$OLDIFS
 
-# batman-adv Kernel-Modul aktivieren (nach Neustart)
-echo "batman-adv" >> /etc/modules
+if [[ ! -v "config[name]" ]] ; then
+    echo "Der Hostname $HOSTNAME wurde nicht in der gateways.csv gefunden! Hat das Gateway den richtigen Hostname und besteht eine Konfiguration in der csv? Abbruch..."
+    exit 99
+fi
 
-# batman-adv Kernel-Modul sofort laden
-modprobe batman-adv
+## Konfiguration anlegen
 
-# fastd Config kopieren
+if [-d "config/"] ; then 
+    echo "- altes Konfigurationsverzeichnis löschen"
+    rm config -r -d
+fi
 
-cp fastd/. /etc/fastd/ -r
+echo "- Konfigurationsverzeichniss anlegen und Templates kopieren"
+mkdir config/
+cp templates/. config/ -r
 
-# FastD-Config anpassen
-sed -i "s/10000/${config[fastdbbport]}/g" /etc/fastd/backbone/fastd.conf
-# sed -i "s/0.0.0.0/${config[ip]}/g" /etc/fastd/backbone/fastd.conf
-sed -i "s/00:00:00:00:00:00/${config[bbmac]}/g" /etc/fastd/backbone/fastd.conf
 
-sed -i "s/10000/${config[fastdport]}/g" /etc/fastd/v4/fastd.conf
-# sed -i "s/0.0.0.0/${config[ip]}/g" /etc/fastd/v4/fastd.conf
-sed -i "s/00:00:00:00:00:00/${config[v4mac]}/g" /etc/fastd/v4/fastd.conf
+## fastd Config
+echo "- Konfigurationsdateien für fastd anpassen"
 
-sed -i "s/10000/${config[fastdport]}/g" /etc/fastd/v6/fastd.conf
+## Verzeichnis für Gateway-Partner anlegen
+mkdir config/fastd/backbone/gateway
+
+## FastD-Config anpassen
+sed -i "s/10000/${config[fastdbbport]}/g" config/fastd/backbone/fastd.conf
+sed -i "s/0.0.0.0/${config[ip]}/g" config/fastd/backbone/fastd.conf
+sed -i "s/00:00:00:00:00:00/${config[bbmac]}/g" config/fastd/backbone/fastd.conf
+
+sed -i "s/10000/${config[fastdport]}/g" config/fastd/v4/fastd.conf
+sed -i "s/0.0.0.0/${config[ip]}/g" config/fastd/v4/fastd.conf
+sed -i "s/00:00:00:00:00:00/${config[v4mac]}/g" config/fastd/v4/fastd.conf
+
+sed -i "s/10000/${config[fastdport]}/g" config/fastd/v6/fastd.conf
 # sed -i "s/0.0.0.0/${config[ip]}/g" /etc/fastd/v6/fastd.conf
-sed -i "s/00:00:00:00:00:00/${config[v6mac]}/g" /etc/fastd/v6/fastd.conf
+sed -i "s/00:00:00:00:00:00/${config[v6mac]}/g" config/fastd/v6/fastd.conf
 
-# FastD Secrets ablegen
-echo "secret \"${config[fastdbbsec]}\";" > /etc/fastd/backbone/secret.conf
-echo "secret \"${config[fastdsec]}\";" > /etc/fastd/v4/secret.conf
-echo "secret \"${config[fastdsec]}\";" > /etc/fastd/v6/secret.conf
+## FastD Secrets ablegen
+echo "- fastd secrets hinterlegen"
+echo "secret \"${config[fastdbbsec]}\";" > config/fastd/backbone/secret.conf
+echo "secret \"${config[fastdsec]}\";" > config/fastd/v4/secret.conf
+echo "secret \"${config[fastdsec]}\";" > config/fastd/v6/secret.conf
 
-# Public-Keys der Gateways der gleichen Domäne hinterlegen
 
-mkdir /etc/fastd/backbone/gateway
+## Public-Keys der Gateways der gleichen Domäne hinterlegen
+echo "- Public-Keys der Gateways der gleichen Domäne anlegen"
+
+## Variable für DNS-Server in der Domäne
+DNSSERVER=${config[ffip]}
 
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
-while read domain nr name dns host ip fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
+while read domain nr name dns host ip ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
     if [ "${config[domain]}" == "$domain" ] && [ "$HOSTNAME" != "$name" ]; then
-        echo "key \"$fastdbbpub\";" > /etc/fastd/backbone/gateway/$name
-        echo "remote \"$dns\" port $fastdbbport;" >> /etc/fastd/backbone/gateway/$name
+        echo "key \"$fastdbbpub\";" > config/fastd/backbone/gateway/$name
+        echo "remote \"$dns\" port $fastdbbport;" >> config/fastd/backbone/gateway/$name
+        DNSSERVER+=", $ffip"
     fi
 
 done < $INPUT
 IFS=$OLDIFS
 
-# FastD Autostart einrichten
-cp fastd@.service /etc/systemd/system/fastd@.service
-systemctl daemon-reload
-systemctl enable fastd@backbone
-systemctl enable fastd@v4
-systemctl enable fastd@v6
 
-# IPv6 und Netzwerkbridge einrichten
-echo "
+## IPv6 und Netzwerkbridge in interfaces anpassen
+echo "- Netzwerkkonfiguration vorbereiten (IPv6, br-ffharz)"
+sed -i "s/[ipv6]/${config[ipv6]}/g" config/interfaces
+sed -i "s/[ipv6gw]/${config[ipv6gw]}/g" config/interfaces
+sed -i "s/[ffipv6]/${config[ffipv6]}/g" config/interfaces
+sed -i "s/[ipv6gw-1]/${config[ipv6gw]::-1}/g" config/interfaces
+sed -i "s/[ffip]/${config[ffip]}/g" config/interfaces
 
-iface ens18 inet6 static
-  address ${config[ipv6]}
-  netmask 64
-  gateway ${config[ipv6gw]}
 
-auto br-ffharz
-iface br-ffharz inet6 static
-    bridge-ports none
-    address ${config[ffipv6]}
-    netmask 48
- 
-    post-up ip addr add ${config[ipv6]}/64 dev br-ffharz
-    post-up ip route add ${config[ipv6gw]::-1}/64 dev br-ffharz
-    pre-down ip addr del ${config[ipv6]}/64 dev br-ffharz
-    pre-down ip route del ${config[ipv6gw]::-1}/64 dev br-ffharz
- 
-iface br-ffharz inet static
-    address ${config[ffip]}
-    netmask 255.255.0.0
- 
-allow-hotplug bat0
-iface bat0 inet6 manual
-    pre-up modprobe batman-adv
-    pre-up batctl if add mesh-vpn
-    pre-up batctl gw server
-    up ip link set \$IFACE up
-    post-up brctl addif br-ffharz \$IFACE
-    post-up batctl it 10000
-    post-up batctl gw server 1000MBit/1000MBit
- 
-    pre-down brctl delif br-ffharz \$IFACE || true
-    down ip link set \$IFACE down" >> /etc/network/interfaces
+# DHCPd Konfiguration anpassen
+echo "- DHCPd Konfiguration anpassen"
+sed -i "s/[dhcprange]/${config[dhcprange]::-3}/g" config/dhcpd.conf
+sed -i "s/[dhcpstart]/${config[dhcpstart]}/g" config/dhcpd.conf
+sed -i "s/[dhcpend]/${config[dhcpend]}/g" config/dhcpd.conf
+sed -i "s/[DNSSERVER]/${DNSSERVER}/g" config/dhcpd.conf
+sed -i "s/[ffip]/${config[ffip]}/g" config/dhcpd.conf
+
+## RADVD Konfiguration anpassen
+## ToDo: IPv6 DNS 
+sed -i "s/[ipv6gw-1]/${config[ipv6gw]::-1}/g" config/radvd.conf
+
+
+
+## DNS
+## ToDo: muss ggf. noch angepasst werden
+
+
+##respondd Konfiguration anpassen
+sed -i "s/[name]/${config[name]}/g" config/respondd.config.json
+sed -i "s/[bbmac]/${config[bbmac]}/g" config/respondd.config.json
+## ToDo: Firmware/batman-adv Version in Konfig schreiben
+
+## Firewall anpassen
+## ToDo Firewall Regeln müssen noch angepasst werden
+
+
+
+if $fullrun; then 
+
+    ## Paketequellen aktualisieren und Pakete installieren
+    echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq)"
+    apt update
+    apt upgrade
+    apt install batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq
+
+    echo "- batman-adv Kernelmodul Autostart aktivieren und sofort laden"
+    ## batman-adv Kernel-Modul aktivieren (nach Neustart)
+    echo "batman-adv" >> /etc/modules
+    ## batman-adv Kernel-Modul sofort laden
+    modprobe batman-adv
+
+    ## Konfigurationsdateien an richtige Stelle kopieren
+    cp config/fastd/. /etc/fastd/ -r
+
+    ## FastD Autostart einrichten
+    cp fastd@.service /etc/systemd/system/fastd@.service
+    systemctl daemon-reload
+    systemctl enable fastd@backbone
+    systemctl enable fastd@v4
+    systemctl enable fastd@v6
+
+    ## Netzwerkbrige anlegen
+    cp /etc/network/interfaces /etc/network/interfaces.old
+    cat config/interfaces >> /etc/network/interfaces
+
+    ## DHCPv4 konfigurieren
+    sed -i "s/INTERFACESv4=\"\"/INTERFACESv4=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
+    sed -i "s/INTERFACESv6=\"\"/INTERFACESv6=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
+    touch /etc/dhcp/static.conf
+    cp /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.old
+    cat config/dhcpd.conf > /etc/dhcp/dhcpd.conf
+
+    ## DHCPv6 konfigurieren
+    cp /etc/radvd.conf /etc/radvd.conf.old
+    cat config/radvd.conf > /etc/radvd.conf
+
+    ## DNS konfigurieren
+    cp /etc/dnsmasq.conf /etc/dnsmasq.conf.old
+    cat config/dnsmasq.conf > /etc/dnsmasq.conf
+
+    ##respondd installieren
+    git clone https://github.com/FreifunkHochstift/ffho-respondd.git /opt/respondd
+    cp config/respondd.config.json /opt/respondd/config.json
+
+    cp /opt/respondd/respondd.service.example /lib/systemd/system/respondd.service
+    sed -i "s/srv/opt/g" /lib/systemd/system/respondd.service
+    systemctl daemon-reload
+    systemctl enable respondd
+
+    ##Firewall-Regeln laden
+    
+
+    ## IP Forwarding aktivieren
+    sed -i "s/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g" /etc/sysctl.conf
+    sed -i "s/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g" /etc/sysctl.conf
+
+
+    ## Restart
+    echo "Fertig! --> reboot"
+fi
+
+
+
+
+
+
+

@@ -160,10 +160,10 @@ sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
 if $fullrun; then 
 
     ## Paketequellen aktualisieren und Pakete installieren
-    echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq)"
+    echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq python3-netifaces)"
     apt update
     apt upgrade
-    apt install batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq
+    apt install batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq python3-netifaces
 
     echo "- batman-adv Kernelmodul Autostart aktivieren und sofort laden"
     ## batman-adv Kernel-Modul aktivieren (nach Neustart)
@@ -172,20 +172,24 @@ if $fullrun; then
     modprobe batman-adv
 
     ## Konfigurationsdateien an richtige Stelle kopieren
+    echo "- fastd Konfigurationsdateien nach /etc/fastd kopieren"
     cp config/fastd/. /etc/fastd/ -r
 
     ## FastD Autostart einrichten
-    cp fastd@.service /etc/systemd/system/fastd@.service
+    echo "- fastd Autostart einrichten"
+    cp config/fastd@.service /etc/systemd/system/fastd@.service
     systemctl daemon-reload
     systemctl enable fastd@backbone
     systemctl enable fastd@v4
     systemctl enable fastd@v6
 
     ## Netzwerkbrige anlegen
+    echo "- Netzwerk-Bridge in /etc/network/interface einrichten"
     cp /etc/network/interfaces /etc/network/interfaces.old
     cat config/interfaces >> /etc/network/interfaces
 
     ## DHCPv4 konfigurieren
+    echo "- DHCPd an br-ffharz binden und Konfigurationsdateien nach /etc/dhcp/ kopieren"
     sed -i "s/INTERFACESv4=\"\"/INTERFACESv4=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
     sed -i "s/INTERFACESv6=\"\"/INTERFACESv6=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
     touch /etc/dhcp/static.conf
@@ -193,19 +197,22 @@ if $fullrun; then
     cat config/dhcpd.conf > /etc/dhcp/dhcpd.conf
 
     ## DHCPv6 konfigurieren
+    echo "- radvd Konfigurationsdatei nach /etc kopieren"
     cp /etc/radvd.conf /etc/radvd.conf.old
     cat config/radvd.conf > /etc/radvd.conf
 
     ## DNS konfigurieren
+    echo "- dnsmasq Konfigurationsdatei nach /etc kopieren"
     cp /etc/dnsmasq.conf /etc/dnsmasq.conf.old
     cat config/dnsmasq.conf > /etc/dnsmasq.conf
 
     ##respondd installieren
+    echo "- respondd installieren, konfigurieren und Autostart einrichten"
     git clone https://github.com/FreifunkHochstift/ffho-respondd.git /opt/respondd
     cp config/respondd.config.json /opt/respondd/config.json
 
     cp /opt/respondd/respondd.service.example /lib/systemd/system/respondd.service
-    sed -i "s/srv/opt/g" /lib/systemd/system/respondd.service
+    sed -i "s/srv\/ffho-/opt\//g" /lib/systemd/system/respondd.service
     systemctl daemon-reload
     systemctl enable respondd
 
@@ -213,6 +220,7 @@ if $fullrun; then
     
 
     ## IP Forwarding aktivieren
+    echo "- IPForwarding aktivieren"
     sed -i "s/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g" /etc/sysctl.conf
     sed -i "s/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g" /etc/sysctl.conf
 

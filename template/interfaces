@@ -6,7 +6,7 @@ iface ens18 inet6 static
 auto br-ffharz
 iface br-ffharz inet6 static
     bridge-ports none
-    address <ffipv6]
+    address <ffipv6>
     netmask 48
  
     post-up ip addr add <ipv6>/64 dev br-ffharz

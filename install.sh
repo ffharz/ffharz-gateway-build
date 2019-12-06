@@ -183,10 +183,14 @@ if $fullrun; then
     systemctl enable fastd@v4
     systemctl enable fastd@v6
 
-    ## Netzwerkbrige anlegen
-    echo "- Netzwerk-Bridge in /etc/network/interface einrichten"
+    ## Netzwerk konfigurieren
+    echo "- Netzwerkinterface auf eth0 umstellen (nach Neustart)"
+    sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"net.ifnames=0 biosdevname=0\"/g" /etc/default/grub
+    grub-mkconfig -o /boot/grub/grub.cfg
+
+    echo "- Netzwerk Konfiguration nach /etc/network/interface kopieren"
     cp /etc/network/interfaces /etc/network/interfaces.old
-    cat config/interfaces >> /etc/network/interfaces
+    cat config/interfaces > /etc/network/interfaces
 
     ## DHCPv4 konfigurieren
     echo "- DHCPd an br-ffharz binden und Konfigurationsdateien nach /etc/dhcp/ kopieren"

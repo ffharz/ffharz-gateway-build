@@ -70,7 +70,7 @@ fi
 
 echo "- Konfigurationsverzeichniss anlegen und Templates kopieren"
 mkdir config/
-cp templates/. config/ -r
+cp template/. config/ -r
 
 
 ## fastd Config

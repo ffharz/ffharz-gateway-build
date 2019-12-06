@@ -131,7 +131,7 @@ sed -i "s/<ffip>/${config[ffip]}/g" config/interfaces
 
 # DHCPd Konfiguration anpassen
 echo "- DHCPd Konfiguration anpassen"
-sed -i "s/<dhcprange>/${config[dhcprange]::-3}/g" config/dhcpd.conf
+sed -i "s/<dhcprange-3>/${config[dhcprange]::-3}/g" config/dhcpd.conf
 sed -i "s/<dhcpstart>/${config[dhcpstart]}/g" config/dhcpd.conf
 sed -i "s/<dhcpend>/${config[dhcpend]}/g" config/dhcpd.conf
 sed -i "s/<DNSSERVER>/${DNSSERVER}/g" config/dhcpd.conf
@@ -200,6 +200,7 @@ if $fullrun; then
     echo "- radvd Konfigurationsdatei nach /etc kopieren"
     cp /etc/radvd.conf /etc/radvd.conf.old
     cat config/radvd.conf > /etc/radvd.conf
+    systemctl enable radvd
 
     ## DNS konfigurieren
     echo "- dnsmasq Konfigurationsdatei nach /etc kopieren"

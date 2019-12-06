@@ -5,9 +5,9 @@
     "mesh-wlan": [ "mesh0" ],
     "nodeinfo": {
       "network": {
-          "mac":  "[bbmac]"
+          "mac":  "<bbmac>"
       },
-      "node_id": "[name]",
+      "node_id": "<name>",
       "owner": {
           "contact": "technik@harz.freifunk.net"
       },

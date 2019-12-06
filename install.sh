@@ -3,10 +3,8 @@
 ## Dieses Script richtet einen Freifunk Harz Gateway automatisiert ein
 ## Voraussetzung ist ein "jungfreuliches" Debian 10 Buster
 
-if [-d "config/"] ; then 
-    echo "Config-Verzeichnis vorhanden, soll trotzdem weiter gemacht werden? (wird gelöscht!)"	
-    read -p"Beenden (j/n)? " force
-
+if [ -d "config/" ] ; then 
+    read -p"Config-Verzeichnis vorhanden, soll trotzdem weiter gemacht werden? (wird gelöscht!) (j/n) " force
     if [ "$force" != "j" ] ; then
         exit 1
     fi
@@ -65,7 +63,7 @@ fi
 
 ## Konfiguration anlegen
 
-if [-d "config/"] ; then 
+if [ -d "config/" ] ; then 
     echo "- altes Konfigurationsverzeichnis löschen"
     rm config -r -d
 fi
@@ -124,24 +122,24 @@ IFS=$OLDIFS
 
 ## IPv6 und Netzwerkbridge in interfaces anpassen
 echo "- Netzwerkkonfiguration vorbereiten (IPv6, br-ffharz)"
-sed -i "s/[ipv6]/${config[ipv6]}/g" config/interfaces
-sed -i "s/[ipv6gw]/${config[ipv6gw]}/g" config/interfaces
-sed -i "s/[ffipv6]/${config[ffipv6]}/g" config/interfaces
-sed -i "s/[ipv6gw-1]/${config[ipv6gw]::-1}/g" config/interfaces
-sed -i "s/[ffip]/${config[ffip]}/g" config/interfaces
+sed -i "s/<ipv6>/${config[ipv6]}/g" config/interfaces
+sed -i "s/<ipv6gw>/${config[ipv6gw]}/g" config/interfaces
+sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/interfaces
+sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/interfaces
+sed -i "s/<ffip>/${config[ffip]}/g" config/interfaces
 
 
 # DHCPd Konfiguration anpassen
 echo "- DHCPd Konfiguration anpassen"
-sed -i "s/[dhcprange]/${config[dhcprange]::-3}/g" config/dhcpd.conf
-sed -i "s/[dhcpstart]/${config[dhcpstart]}/g" config/dhcpd.conf
-sed -i "s/[dhcpend]/${config[dhcpend]}/g" config/dhcpd.conf
-sed -i "s/[DNSSERVER]/${DNSSERVER}/g" config/dhcpd.conf
-sed -i "s/[ffip]/${config[ffip]}/g" config/dhcpd.conf
+sed -i "s/<dhcprange>/${config[dhcprange]::-3}/g" config/dhcpd.conf
+sed -i "s/<dhcpstart>/${config[dhcpstart]}/g" config/dhcpd.conf
+sed -i "s/<dhcpend>/${config[dhcpend]}/g" config/dhcpd.conf
+sed -i "s/<DNSSERVER>/${DNSSERVER}/g" config/dhcpd.conf
+sed -i "s/<ffip>/${config[ffip]}/g" config/dhcpd.conf
 
 ## RADVD Konfiguration anpassen
 ## ToDo: IPv6 DNS 
-sed -i "s/[ipv6gw-1]/${config[ipv6gw]::-1}/g" config/radvd.conf
+sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/radvd.conf
 
 
 
@@ -150,8 +148,8 @@ sed -i "s/[ipv6gw-1]/${config[ipv6gw]::-1}/g" config/radvd.conf
 
 
 ##respondd Konfiguration anpassen
-sed -i "s/[name]/${config[name]}/g" config/respondd.config.json
-sed -i "s/[bbmac]/${config[bbmac]}/g" config/respondd.config.json
+sed -i "s/<name>/${config[name]}/g" config/respondd.config.json
+sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
 ## ToDo: Firmware/batman-adv Version in Konfig schreiben
 
 ## Firewall anpassen
@@ -219,7 +217,7 @@ if $fullrun; then
     sed -i "s/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g" /etc/sysctl.conf
 
 
-    ## Restart
+    ## Ende
     echo "Fertig! --> reboot"
 fi
 

@@ -1,21 +1,21 @@
 iface ens18 inet6 static
-  address [ipv6]
+  address <ipv6>
   netmask 64
-  gateway [ipv6gw]
+  gateway <ipv6gw>
 
 auto br-ffharz
 iface br-ffharz inet6 static
     bridge-ports none
-    address [ffipv6]
+    address <ffipv6]
     netmask 48
  
-    post-up ip addr add [ipv6]/64 dev br-ffharz
-    post-up ip route add [ipv6gw-1]/64 dev br-ffharz
-    pre-down ip addr del [ipv6]/64 dev br-ffharz
-    pre-down ip route del [ipv6gw-1]/64 dev br-ffharz
+    post-up ip addr add <ipv6>/64 dev br-ffharz
+    post-up ip route add <ipv6gw-1>/64 dev br-ffharz
+    pre-down ip addr del <ipv6>/64 dev br-ffharz
+    pre-down ip route del <ipv6gw-1>/64 dev br-ffharz
  
 iface br-ffharz inet static
-    address [ffip]
+    address <ffip>
     netmask 255.255.0.0
  
 allow-hotplug bat0

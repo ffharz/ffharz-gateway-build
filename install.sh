@@ -154,16 +154,16 @@ sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
 
 ## Firewall anpassen
 ## ToDo Firewall Regeln müssen noch angepasst werden
-
+sed -i "s/<dhcprange>/${config[dhcprange]}/g" config/nftables.sh
 
 
 if $fullrun; then 
 
     ## Paketequellen aktualisieren und Pakete installieren
-    echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq python3-netifaces)"
+    echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables)"
     apt update
     apt upgrade
-    apt install batctl fastd bridge-utils isc-dhcp-server radvd iptables-persistent dnsmasq python3-netifaces
+    apt install batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables
 
     echo "- batman-adv Kernelmodul Autostart aktivieren und sofort laden"
     ## batman-adv Kernel-Modul aktivieren (nach Neustart)
@@ -222,7 +222,11 @@ if $fullrun; then
     systemctl enable respondd
 
     ##Firewall-Regeln laden
+    echo "- nftable Firewall Autostart einrichten"
+    systemctl enable nftables.service
+
     
+        
 
     ## IP Forwarding aktivieren
     echo "- IPForwarding aktivieren"

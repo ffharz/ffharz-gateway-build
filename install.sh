@@ -156,6 +156,7 @@ sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
 ## Firewall anpassen
 echo "- Firewall Konfiguration anpassen"
 sed -i "s/<dhcprange-3>/${config[dhcprange]::-3}/g" config/nftables.sh
+sed -i "s/<dhcprange-3>/${config[dhcprange]::-3}/g" config/ff-firewall.nft
 
 
 if $fullrun; then 
@@ -212,7 +213,7 @@ if $fullrun; then
     cp /etc/dnsmasq.conf /etc/dnsmasq.conf.old
     cat config/dnsmasq.conf > /etc/dnsmasq.conf
 
-    ##respondd installieren
+    ## respondd installieren
     echo "- respondd installieren, konfigurieren und Autostart einrichten"
     git clone https://github.com/FreifunkHochstift/ffho-respondd.git /opt/respondd
     cp config/respondd.config.json /opt/respondd/config.json
@@ -222,10 +223,19 @@ if $fullrun; then
     systemctl daemon-reload
     systemctl enable respondd
 
-    ##Firewall-Regeln laden
+    ## Firewall-Regeln laden
+
+    echo "- Verzeichnis /etc/nftables/ anlegen und Ruleset dort ablegen"
+    
+    if [ ! -d "/etc/nftables" ] ; then 
+        mkdir /etc/nftables/
+        echo "include /etc/nftables/*.nft" >> /etc/nftables.conf
+    fi
+
+    cp config/ff-firewall.nft /etc/nftables/ff-firewall.nft
+
     echo "- nftable Firewall Autostart einrichten"
     systemctl enable nftables.service
-
     
         
 
@@ -238,10 +248,3 @@ if $fullrun; then
     ## Ende
     echo "Fertig! --> reboot"
 fi
-
-
-
-
-
-
-

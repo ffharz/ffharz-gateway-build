@@ -2,6 +2,8 @@
 
 nft -f /etc/nftables.conf
 
+define net_ipv4_ff = <dhcprange-3>/16
+
 ## filter INPUT ####################################################################
 ## IPv4 Filter Table anlegen und Eingehend alles verwerfen
 nft add table ip filter
@@ -18,12 +20,12 @@ nft add rule ip filter INPUT iifname "backbone" accept
 nft add rule ip filter INPUT iifname "eth0" accept
 
 ## Alle privaten IP-Bereiche, ausser dem FF-Netz, von br-ffharz verwerfen
-nft add rule ip filter INPUT iifname "br-ffharz" ip saddr != <dhcprange-3>/16 counter drop
+nft add rule ip filter INPUT iifname "br-ffharz" ip saddr != $net_ipv4_ff counter drop
 
 ## DNS, SSH und PING aus FF-Netz an lokalen Server erlauben
 nft add rule ip filter INPUT iifname "br-ffharz" icmp type echo-request accept
 nft add rule ip filter INPUT iifname "br-ffharz" udp dport domain accept
-nft add rule ip filter INPUT iifname "br-ffharz" tcp dport ssh accept
+# nft add rule ip filter INPUT iifname "br-ffharz" tcp dport ssh accept
 
 nft add rule ip filter INPUT ct state invalid counter reject
 nft add rule ip filter INPUT ct state related,established accept
@@ -51,5 +53,5 @@ nft add table nat
 nft add chain nat postrouting { type nat hook postrouting priority 100 \; }
 ## Masquerading für alle ausgehenden Pakete aus FF-Netz aktivieren
 #nft add rule nat postrouting masquerade
-nft add rule nat postrouting oifname "eth0" ip saddr <dhcprange> masquerade
+nft add rule nat postrouting oifname "eth0" ip saddr $net_ipv4_ff masquerade
 

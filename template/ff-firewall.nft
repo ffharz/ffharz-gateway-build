@@ -4,7 +4,7 @@ define net_ipv4_ff = <dhcprange-3>/16
 ## IPv4 Filter Table anlegen und Eingehend alles verwerfen
 add table ip filter
 add chain ip filter INPUT { type filter hook input priority 0; policy drop; }
-add chain ip filter FORWARD { type filter hook forward priority 0; policy accept }
+add chain ip filter FORWARD { type filter hook forward priority 0; policy accept; }
 add chain ip filter OUTPUT { type filter hook output priority 0; policy accept; }
 
 ## Eingehend von lo, bat0, mesh-vpn-ipv4, mesh-vpn-ipv4, backbone und eth0 Zulassen

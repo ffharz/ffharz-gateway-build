@@ -37,7 +37,7 @@ do
         config[ffip]=$ffip
         config[ipv6]=$ipv6
         config[ipv6gw]=$ipv6gw
-        config[ffipv6]=$ffipv6    
+        config[ffipv6]=$ffipv6
         config[fastdport]=$fastdport
         config[fastdbbport]=$fastdbbport
         config[bbmac]=$bbmac
@@ -138,7 +138,7 @@ sed -i "s/<DNSSERVER>/${DNSSERVER}/g" config/dhcpd.conf
 sed -i "s/<ffip>/${config[ffip]}/g" config/dhcpd.conf
 
 ## RADVD Konfiguration anpassen
-## ToDo: IPv6 DNS 
+## ToDo: IPv6 DNS
 sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/radvd.conf
 
 
@@ -148,13 +148,14 @@ sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/radvd.conf
 
 
 ##respondd Konfiguration anpassen
+echo "- respondd Konfiguration anpassen"
 sed -i "s/<name>/${config[name]}/g" config/respondd.config.json
 sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
 ## ToDo: Firmware/batman-adv Version in Konfig schreiben
 
 ## Firewall anpassen
-## ToDo Firewall Regeln müssen noch angepasst werden
-sed -i "s/<dhcprange>/${config[dhcprange]}/g" config/nftables.sh
+echo "- Firewall Konfiguration anpassen"
+sed -i "s/<dhcprange-3>/${config[dhcprange]::-3}/g" config/nftables.sh
 
 
 if $fullrun; then 

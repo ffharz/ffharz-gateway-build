@@ -1,2 +1,6 @@
 
 gateways.csv
+ipv4-g9.fw
+template/ipv4.fw
+template/ipv4.nfw
+template/ipv4.fw

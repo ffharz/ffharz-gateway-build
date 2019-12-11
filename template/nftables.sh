@@ -18,7 +18,7 @@ nft add rule ip filter INPUT iifname "backbone" accept
 nft add rule ip filter INPUT iifname "eth0" accept
 
 ## Alle privaten IP-Bereiche, ausser dem FF-Netz, von br-ffharz verwerfen
-nft add rule ip filter INPUT iifname "br-ffharz" ip saddr != <dhcprange> counter drop
+nft add rule ip filter INPUT iifname "br-ffharz" ip saddr != <dhcprange-3>/16 counter drop
 
 ## DNS, SSH und PING aus FF-Netz an lokalen Server erlauben
 nft add rule ip filter INPUT iifname "br-ffharz" icmp type echo-request accept

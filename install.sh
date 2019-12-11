@@ -122,6 +122,7 @@ IFS=$OLDIFS
 
 ## IPv6 und Netzwerkbridge in interfaces anpassen
 echo "- Netzwerkkonfiguration vorbereiten (IPv6, br-ffharz)"
+sed -i "s/<ip>/${config[ip]}/g" config/interfaces
 sed -i "s/<ipv6>/${config[ipv6]}/g" config/interfaces
 sed -i "s/<ipv6gw>/${config[ipv6gw]}/g" config/interfaces
 sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/interfaces

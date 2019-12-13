@@ -19,9 +19,9 @@ fi
 echo "- Start"
 
 ## Config laden
-echo "- Gateway-Konfiguration aus gateways.csv laden"
+echo "- Gateway-Konfiguration aus px-gateways.csv laden"
 declare -A config
-INPUT=gateways.csv
+INPUT=px-gateways.csv
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
@@ -57,7 +57,7 @@ done < $INPUT
 IFS=$OLDIFS
 
 if [[ ! -v "config[name]" ]] ; then
-    echo "Der Hostname $HOSTNAME wurde nicht in der gateways.csv gefunden! Hat das Gateway den richtigen Hostname und besteht eine Konfiguration in der csv? Abbruch..."
+    echo "Der Hostname $HOSTNAME wurde nicht in der px-gateways.csv gefunden! Hat das Gateway den richtigen Hostname und besteht eine Konfiguration in der csv? Abbruch..."
     exit 99
 fi
 

@@ -4,7 +4,7 @@ Script zum automatischen installieren von Freifunk Harz Gateways.
 
 ## Vorraussetzungen
 
-Vorraussetzung ist eine frisch installierte VM mit Debian 10 Buster auf einer ensprechend vorbereiteten Proxmox-Installation (*px-install.sh*) (siehe hostserver-einrichten.md) oder ein frisch installierter Hetzner Cloud-Server (*hc-install.sh*)
+Vorraussetzung ist eine frisch installierte VM mit Debian 10 Buster auf einer ensprechend vorbereiteten Proxmox-Installation (*px-install.sh*) (siehe hostserver-einrichten.md) oder ein frisch installierter Hetzner Cloud-Server (*hc-install.sh*) mit Debian 10.
 Zusätzlich wird eine **-gateways.csv* benötigt, welche alle Informationen zu den Gateways enthält.
 Siehe *gateways.csv.empty*.
 

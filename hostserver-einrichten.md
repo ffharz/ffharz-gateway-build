@@ -75,6 +75,11 @@ Anschließend kann die Konfiguration dem eigenen Sicherheitsanspruch angepasst w
 
 ### Netzwerk
 
+Der einfachheit halber wird der Name der Netzwerkkarte auf eth0 geändert:
+
+    sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"net.ifnames=0 biosdevname=0\"/g" /etc/default/grub
+    grub-mkconfig -o /boot/grub/grub.cfg
+
 Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden. Die Bridge erzeugt quasi ein "internes" Netzwerk, an der alle VM's angebunden sind. Dem Netzwerk geben wir den IP-Bereich 192.168.0.0/16 und aktivieren NAT, damit die VM's auch das Internet erreichen. Dafür muss folgendes in die */etc/network/interfaces* hinzugefügt werden:
 
     auto vmbr0

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Dieses Script richtet einen Freifunk Harz Gateway auf einem Hetzner Cloud Server automatisiert ein
+## Dieses Script richtet einen Freifunk Harz Konzentrator auf einem Hetzner Cloud Server automatisiert ein
 ## Voraussetzung ist ein "jungfreuliches" Debian 10 Buster
 
 if [ -d "config/" ] ; then 
@@ -19,7 +19,7 @@ fi
 echo "- Start"
 
 ## Config laden
-echo "- Gateway-Konfiguration aus hc-gateways.csv laden"
+echo "- Konzentrator-Konfiguration aus hc-gateways.csv laden"
 declare -A config
 INPUT=hc-gateways.csv
 OLDIFS=$IFS
@@ -75,43 +75,25 @@ cp template/. config/ -r
 echo "- Konfigurationsdateien für fastd anpassen"
 
 ## FastD-Config anpassen
-sed -i "s/0.0.0.0/${config[ip]}/g" config/fastd/v4/fastd.conf
-sed -i "s/00:00:00:00:00:00/${config[v4mac]}/g" config/fastd/v4/fastd.conf
-
-# sed -i "s/0.0.0.0/${config[ip]}/g" /etc/fastd/v6/fastd.conf
-sed -i "s/00:00:00:00:00:00/${config[v6mac]}/g" config/fastd/v6/fastd.conf
-
 sed -i "s/0.0.0.0/192.168.1.${config[nr]}/g" config/fastd/backbone/fastd.conf
 sed -i "s/00:00:00:00:00:00/${config[bbmac]}/g" config/fastd/backbone/fastd.conf
 
-## FastD Secrets ablegen
-echo "- fastd secrets hinterlegen"
-echo "secret \"${config[fastdsec]}\";" > config/fastd/v4/secret.conf
-echo "secret \"${config[fastdsec]}\";" > config/fastd/v6/secret.conf
+## FastD Secret ablegen
+echo "- fastd secret hinterlegen"
 echo "secret \"${config[fastdbbsec]}\";" > config/fastd/backbone/secret.conf
 
 
 ## DNS Server Liste erstellen und Public-Key von Konzentrator hinterlegen
-echo "- DNS Server liste erstellen und Konzentrator public-Key anlegen "
-
-## Variablen für DNS-Server in der Domäne
-DNSSERVER=${config[ffip]}
-DNSSERVERv6=${config[ffipv6]}
-DNSSERVERv6+=" ${config[ipv6gw]::-1}2"
+echo "- fastd public-Keys der Gateways in der Domäne anlegen "
 
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
 while read domain nr name dns host ip ffip ipv6 ipv6gw ffipv6 bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
-    if [ "${config[domain]}" == "$domain" ] && [ "$nr" == "10" ]; then
+    if [ "${config[domain]}" == "$domain" ] && [ "$HOSTNAME" != "$name" ]; then
         echo "key \"$fastdbbpub\";" > config/fastd/backbone/gateway/$name
-        echo "remote \"192.168.1.10\" port 10001;" >> config/fastd/backbone/gateway/$name
-        DNSSERVER+=", $ffip"
-        DNSSERVERv6+=" $ffipv6"
-
-        sed -i "s/<ipv6>/$ipv6/g" config/dnsmasq.conf
-        sed -i "s/<ip>/$ip/g" config/dnsmasq.conf
+        echo "remote \"192.168.1.$nr\" port 10001;" >> config/fastd/backbone/gateway/$name
     fi
 
 done < $INPUT
@@ -122,20 +104,8 @@ echo "- Netzwerkkonfiguration vorbereiten (IPv6, br-ffharz)"
 sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/99-ff-bridge.cfg
 sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/99-ff-bridge.cfg
 sed -i "s/<ffip>/${config[ffip]}/g" config/99-ff-bridge.cfg
-
-
-# DHCPd Konfiguration anpassen
-echo "- DHCPd Konfiguration anpassen"
-sed -i "s/<dhcprange-3>/${config[dhcprange]::-3}/g" config/dhcpd.conf
-sed -i "s/<dhcpstart>/${config[dhcpstart]}/g" config/dhcpd.conf
-sed -i "s/<dhcpend>/${config[dhcpend]}/g" config/dhcpd.conf
-sed -i "s/<DNSSERVER>/${DNSSERVER}/g" config/dhcpd.conf
-sed -i "s/<ffip>/${config[ffip]}/g" config/dhcpd.conf
-
-## RADVD Konfiguration anpassen
-## ToDo: IPv6 DNS
-sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/radvd.conf
-sed -i "s/<DNSSERVERv6>/${DNSSERVERv6}/g" config/radvd.conf
+sed -i "s/pre-up batctl gw server/#pre-up batctl gw server/g" config/99-ff-bridge.cfg
+sed -i "s/post-up batctl gw server 1000MBit\/1000MBit/#post-up batctl gw server 1000MBit\/1000MBit/g" config/99-ff-bridge.cfg
 
 ##respondd Konfiguration anpassen
 echo "- respondd Konfiguration anpassen"
@@ -143,18 +113,13 @@ sed -i "s/<name>/${config[name]}/g" config/respondd.config.json
 sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
 ## ToDo: Firmware/batman-adv Version in Konfig schreiben
 
-## Firewall anpassen
-echo "- Firewall Konfiguration anpassen"
-sed -i "s/<dhcprange-3>/${config[dhcprange]::-3}/g" config/hc-ff-firewall.nft
-
-
 if $fullrun; then 
 
     ## Paketequellen aktualisieren und Pakete installieren
-    echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables)"
+    echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils python3-netifaces nftables )"
     apt update
     apt upgrade
-    apt install batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables 
+    apt install batctl fastd bridge-utils python3-netifaces nftables 
 
     echo "- batman-adv Kernelmodul Autostart aktivieren und sofort laden"
     ## batman-adv Kernel-Modul aktivieren (nach Neustart)
@@ -165,36 +130,17 @@ if $fullrun; then
     ## Konfigurationsdateien an richtige Stelle kopieren
     echo "- fastd Konfigurationsdateien nach /etc/fastd kopieren"
     cp config/fastd/. /etc/fastd/ -r
+    rm -r -d /etc/fastd/v4
+    rm -r -d /etc/fastd/v6
 
     ## FastD Autostart einrichten
     echo "- fastd Autostart einrichten"
     cp config/fastd@.service /etc/systemd/system/fastd@.service
     systemctl daemon-reload
-    systemctl enable fastd@v4
-    systemctl enable fastd@v6
     systemctl enable fastd@backbone
 
     echo "- Netzwerk Konfiguration nach /etc/network/interfaces.d/99-ff-bridge.cfg kopieren"
     cat config/99-ff-bridge.cfg > /etc/network/interfaces.d/99-ff-bridge.cfg
-
-    ## DHCPv4 konfigurieren
-    echo "- DHCPd an br-ffharz binden und Konfigurationsdateien nach /etc/dhcp/ kopieren"
-    sed -i "s/INTERFACESv4=\"\"/INTERFACESv4=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
-    sed -i "s/INTERFACESv6=\"\"/INTERFACESv6=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
-    touch /etc/dhcp/static.conf
-    cp /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.old
-    cat config/dhcpd.conf > /etc/dhcp/dhcpd.conf
-
-    ## DHCPv6 konfigurieren
-    echo "- radvd Konfigurationsdatei nach /etc kopieren"
-    cp /etc/radvd.conf /etc/radvd.conf.old
-    cat config/radvd.conf > /etc/radvd.conf
-    systemctl enable radvd
-
-    ## DNS konfigurieren
-    echo "- dnsmasq Konfigurationsdatei nach /etc kopieren"
-    cp /etc/dnsmasq.conf /etc/dnsmasq.conf.old
-    cat config/dnsmasq.conf > /etc/dnsmasq.conf
 
     ## respondd installieren
     echo "- respondd installieren, konfigurieren und Autostart einrichten"
@@ -215,7 +161,7 @@ if $fullrun; then
         echo "include \"/etc/nftables/*.nft\"" >> /etc/nftables.conf
     fi
 
-    cp config/hc-ff-firewall.nft /etc/nftables/ff-firewall.nft
+    cp config/konzentrator-firewall.nft /etc/nftables/konzentrator-firewall.nft
 
     echo "- nftable Firewall Autostart einrichten"
     systemctl enable nftables.service

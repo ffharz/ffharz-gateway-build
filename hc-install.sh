@@ -77,46 +77,52 @@ cp template/. config/ -r
 echo "- Konfigurationsdateien für fastd anpassen"
 
 ## FastD-Config anpassen
-sed -i "s/10000/${config[fastdport]}/g" config/fastd/v4/fastd.conf
 sed -i "s/0.0.0.0/${config[ip]}/g" config/fastd/v4/fastd.conf
 sed -i "s/00:00:00:00:00:00/${config[v4mac]}/g" config/fastd/v4/fastd.conf
 
-sed -i "s/10000/${config[fastdport]}/g" config/fastd/v6/fastd.conf
 # sed -i "s/0.0.0.0/${config[ip]}/g" /etc/fastd/v6/fastd.conf
 sed -i "s/00:00:00:00:00:00/${config[v6mac]}/g" config/fastd/v6/fastd.conf
+
+sed -i "s/0.0.0.0/192.168.1.${config[nr]}/g" config/fastd/v4/fastd.conf
+sed -i "s/00:00:00:00:00:00/${config[bbmac]}/g" config/fastd/v4/fastd.conf
 
 ## FastD Secrets ablegen
 echo "- fastd secrets hinterlegen"
 echo "secret \"${config[fastdsec]}\";" > config/fastd/v4/secret.conf
 echo "secret \"${config[fastdsec]}\";" > config/fastd/v6/secret.conf
+echo "secret \"${config[fastdbbsec]}\";" > config/fastd/backbone/secret.conf
 
 
-## Public-Keys der Gateways der gleichen Domäne hinterlegen
-echo "- DNS Server-Liste erstellen"
+## DNS Server Liste erstellen und Public-Key von Konzentrator hinterlegen
+echo "- DNS Server liste erstellen und Konzentrator public-Key anlegen "
 
-## Variable für DNS-Server in der Domäne
+## Variablen für DNS-Server in der Domäne
 DNSSERVER=${config[ffip]}
+DNSSERVERv6=${config[ffipv6]}
+DNSSERVERv6+=" ${config[ipv6gw]::-1}2"
 
+echo "- Konzentrator "
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
 while read domain nr name dns host ip ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
-    if [ "${config[domain]}" == "$domain" ] && [ "$HOSTNAME" != "$name" ]; then
-
+    if [ "${config[domain]}" == "$domain" ] && [ "$nr" == "10" ]; then
+        echo "key \"$fastdbbpub\";" > config/fastd/backbone/gateway/$name
+        echo "remote \"192.168.1.10\" port 10001;" >> config/fastd/backbone/gateway/$name
         DNSSERVER+=", $ffip"
+        DNSSERVERv6+=" $ffipv6"
+
+        sed -i "s/<ipv6>/$ipv6/g" config/dnsmasq.conf
+        sed -i "s/<ip>/$ip/g" config/dnsmasq.conf
     fi
 
 done < $INPUT
 IFS=$OLDIFS
 
-
 ## IPv6 und Netzwerkbridge in interfaces anpassen
 echo "- Netzwerkkonfiguration vorbereiten (IPv6, br-ffharz)"
-sed -i "s/<ip>/${config[ip]}/g" config/99-ff-bridge.cfg
-sed -i "s/<ipv6>/${config[ipv6]}/g" config/99-ff-bridge.cfg
 sed -i "s/<ipv6gw>/${config[ipv6gw]}/g" config/99-ff-bridge.cfg
-sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/99-ff-bridge.cfg
 sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/99-ff-bridge.cfg
 sed -i "s/<ffip>/${config[ffip]}/g" config/99-ff-bridge.cfg
 
@@ -132,12 +138,7 @@ sed -i "s/<ffip>/${config[ffip]}/g" config/dhcpd.conf
 ## RADVD Konfiguration anpassen
 ## ToDo: IPv6 DNS
 sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/radvd.conf
-
-
-
-## DNS
-## ToDo: muss ggf. noch angepasst werden
-
+sed -i "s/<DNSSERVERv6>/${DNSSERVERv6}/g" config/radvd.conf
 
 ##respondd Konfiguration anpassen
 echo "- respondd Konfiguration anpassen"
@@ -167,7 +168,6 @@ if $fullrun; then
     ## Konfigurationsdateien an richtige Stelle kopieren
     echo "- fastd Konfigurationsdateien nach /etc/fastd kopieren"
     cp config/fastd/. /etc/fastd/ -r
-    rm config/fastd/backbone -d -r
 
     ## FastD Autostart einrichten
     echo "- fastd Autostart einrichten"
@@ -175,6 +175,7 @@ if $fullrun; then
     systemctl daemon-reload
     systemctl enable fastd@v4
     systemctl enable fastd@v6
+    systemctl enable fastd@backbone
 
     echo "- Netzwerk Konfiguration nach /etc/network/interfaces.d/99-ff-bridge.cfg kopieren"
     cat config/99-ff-bridge.cfg > /etc/network/interfaces.d/99-ff-bridge.cfg
@@ -217,7 +218,7 @@ if $fullrun; then
         echo "include \"/etc/nftables/*.nft\"" >> /etc/nftables.conf
     fi
 
-    cp config/ff-firewall.nft /etc/nftables/ff-firewall.nft
+    cp config/hc-ff-firewall.nft /etc/nftables/ff-firewall.nft
 
     echo "- nftable Firewall Autostart einrichten"
     systemctl enable nftables.service

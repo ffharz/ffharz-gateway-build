@@ -12,8 +12,8 @@ add rule ip filter INPUT iifname "lo" accept
 add rule ip filter INPUT iifname "bat0" accept
 add rule ip filter INPUT iifname "mesh-vpn-ipv4" accept
 add rule ip filter INPUT iifname "mesh-vpn-ipv6" accept
+add rule ip filter INPUT iifname "backbone" accept
 add rule ip filter INPUT iifname "ens10" accept
-# add rule ip filter INPUT iifname "eth0" accept
 
 ## Alle privaten IP-Bereiche, ausser dem FF-Netz, von br-ffharz verwerfen
 add rule ip filter INPUT iifname "br-ffharz" ip saddr != $net_ipv4_ff counter drop
@@ -24,7 +24,7 @@ add rule ip filter INPUT iifname "br-ffharz" udp dport domain accept
 # add rule ip filter INPUT iifname "br-ffharz" tcp dport ssh accept
 
 add rule ip filter INPUT iifname "eth0" icmp type echo-request accept
-add rule ip filter INPUT iifname "eth0" udp dport domain accept
+#add rule ip filter INPUT iifname "eth0" udp dport domain accept
 #add rule ip filter INPUT iifname "eth0" tcp dport ssh accept
 add rule ip filter INPUT iifname "eth0" udp dport 10000 accept
 add rule ip filter INPUT iifname "eth0" tcp dport 65333 accept
@@ -53,6 +53,7 @@ add rule ip filter OUTPUT ct state related,established accept
 ## NAT Table anlegen
 add table nat
 add chain nat postrouting { type nat hook postrouting priority 100 ; }
+
 ## Masquerading für alle ausgehenden Pakete aus FF-Netz aktivieren
 #nft add rule nat postrouting masquerade
 add rule nat postrouting oifname "eth0" ip saddr $net_ipv4_ff masquerade

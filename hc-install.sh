@@ -199,13 +199,13 @@ if $fullrun; then
 
     ## respondd installieren
     echo "- respondd installieren, konfigurieren und Autostart einrichten"
-    git clone https://github.com/FreifunkHochstift/ffho-respondd.git /opt/respondd
-    cp config/respondd.config.json /opt/respondd/config.json
+    git clone https://github.com/FreifunkHochstift/ffho-respondd.git /opt/ext-respondd
+    cp config/respondd.config.json /opt/ext-respondd/config.json
 
-    cp /opt/respondd/respondd.service.example /lib/systemd/system/respondd.service
-    sed -i "s/srv\/ffho-/opt\//g" /lib/systemd/system/respondd.service
+    cp /opt/ext-respondd/ext-respondd.service.example /lib/systemd/system/ext-respondd.service
+    #sed -i "s/\/opt\/ext-respondd/\/opt\/respondd/g" /lib/systemd/system/respondd.service
     systemctl daemon-reload
-    systemctl enable respondd
+    systemctl enable ext-respondd
 
     ## Firewall-Regeln laden
 

@@ -69,6 +69,7 @@ fi
 echo "- Konfigurationsverzeichniss anlegen und Templates kopieren"
 mkdir config/
 cp template/. config/ -r
+mkdir config/fastd/backbone/gateway/
 
 
 ## fastd Config

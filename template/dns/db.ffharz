@@ -1,0 +1,48 @@
+;; db.ffharz
+;; Reverse lookup zone for ffharz
+;;
+$TTL 2D
+@       IN      SOA     ffharz. root.ffharz. (
+                                2018091501      ; Serial
+                                        8H      ; Refresh
+                                        2H      ; Retry
+                                        4W      ; Expire
+                                        2D )    ; TTL Negative Cache
+
+@       IN      NS      ns.ffharz.
+ns                      IN      A       10.<domain>.0.10
+@                       IN      A       10.<domain>.0.10
+@                       IN      AAAA    <ffip>
+
+localhost               IN      A       127.0.0.1
+                        IN      AAAA    ::1
+
+localnode               IN      AAAA    fd0e:8db3:d50a::9
+localnode               IN      A       10.<domain>.0.9
+knoten                  IN      AAAA    fd0e:8db3:d50a::9
+knoten                  IN      A       10.<domain>.0.9
+www.knoten              IN      AAAA    fd0e:8db3:d50a::9
+www.knoten              IN      A       10.<domain>.0.9
+ns                      IN      A       10.<domain>.0.10
+ns                      IN      AAAA    <ffip>
+1.<domain>.gw           IN      A       10.<domain>.0.1
+1.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>1
+2.<domain>.gw           IN      A       10.<domain>.0.2
+2.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>2
+3.<domain>.gw           IN      A       10.<domain>.0.3
+3.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>3
+4.<domain>.gw           IN      A       10.<domain>.0.4
+4.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>4
+5.<domain>.gw           IN      A       10.<domain>.0.5
+5.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>5
+6.<domain>.gw           IN      A       10.<domain>.0.6
+6.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>6
+7.<domain>.gw           IN      A       10.<domain>.0.7
+7.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>7
+8.<domain>.gw           IN      A       10.<domain>.0.8
+8.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>8
+mirror                  IN      AAAA    <ffip>
+mirror                  IN      A       10.<domain>.0.10
+
+domain;Domains von User
+;; pad.service             IN      CNAME   pad

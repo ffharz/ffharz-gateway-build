@@ -108,11 +108,19 @@ sed -i "s/<ffip>/${config[ffip]}/g" config/99-ff-bridge.cfg
 sed -i "s/pre-up batctl gw server/#pre-up batctl gw server/g" config/99-ff-bridge.cfg
 sed -i "s/post-up batctl gw server 1000MBit\/1000MBit/#post-up batctl gw server 1000MBit\/1000MBit/g" config/99-ff-bridge.cfg
 
-##respondd Konfiguration anpassen
+## respondd Konfiguration anpassen
 echo "- respondd Konfiguration anpassen"
 sed -i "s/<name>/${config[name]}/g" config/respondd.config.json
 sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
 ## ToDo: Firmware/batman-adv Version in Konfig schreiben
+
+## bind9 Konfiguration anpassen
+echo "- bind9 Konfiguration anpassen"
+sed -i "s/<domain>/${config[domain]}/g" config/dns/named.conf.options
+sed -i "s/<domain>/${config[domain]}/g" config/dns/named.conf.ffharz
+sed -i "s/<domain>/${config[domain]}/g" config/dns/db.ffharz
+sed -i "s/<ffip>/${config[ffip]}/g" config/dns/db.ffharz
+sed -i "s/<domain>/${config[domain]}/g" config/dns/db.x.10
 
 if $fullrun; then 
 
@@ -120,7 +128,7 @@ if $fullrun; then
     echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils python3-netifaces nftables )"
     apt update
     apt upgrade
-    apt install batctl fastd bridge-utils python3-netifaces nftables 
+    apt install -y batctl fastd bridge-utils python3-netifaces nftables bind9
 
     echo "- batman-adv Kernelmodul Autostart aktivieren und sofort laden"
     ## batman-adv Kernel-Modul aktivieren (nach Neustart)
@@ -152,6 +160,15 @@ if $fullrun; then
     #sed -i "s/\/opt\/ext-respondd/\/opt\/respondd/g" /lib/systemd/system/respondd.service
     systemctl daemon-reload
     systemctl enable ext-respondd
+
+    ## bind9 einrichten
+    cp config/dns/named.conf.options /etc/bind/named.conf.options
+    cp config/dns/named.conf.ffharz /etc/bind/named.conf.ffharz
+    cp config/dns/db.ffharz /etc/bind/db.ffharz
+    cp config/dns/db.x.10 /etc/bind/db.${config[domain]}.10
+
+    echo "include \"/etc/bind/named.conf.ffharz\";" >> named.conf.local
+    echo "include \"/etc/bind/zones.rfc1918\";" >> named.conf.local
 
     ## Firewall-Regeln laden
 

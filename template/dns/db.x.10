@@ -1,0 +1,25 @@
+;; db.<domain>.10
+;; Reverse lookup zone for ffharz
+;;
+$TTL 2D
+@       IN      SOA     ffharz. root.ffharz. (
+                                2016012700      ; Serial
+                                        8H      ; Refresh
+                                        2H      ; Retry
+                                        4W      ; Expire
+                                        2D )    ; TTL Negative Cache
+
+@       IN      NS      ns.ffharz.
+
+9.0     IN      PTR     nextnode.ffharz.
+9.0     IN      PTR     knoten.ffharz.
+9.0     IN      PTR     localnode.ffharz.
+1.0     IN      PTR     1.<domain>.gw.ffharz.
+2.0     IN      PTR     2.<domain>.gw.ffharz.
+3.0     IN      PTR     3.<domain>.gw.ffharz.
+4.0     IN      PTR     4.<domain>.gw.ffharz.
+5.0     IN      PTR     5.<domain>.gw.ffharz.
+6.0     IN      PTR     6.<domain>.gw.ffharz.
+7.0     IN      PTR     7.<domain>.gw.ffharz.
+8.0     IN      PTR     8.<domain>.gw.ffharz.
+10.0    IN      PTR     mirror.ffharz.

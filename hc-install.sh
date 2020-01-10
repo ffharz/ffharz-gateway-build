@@ -155,7 +155,7 @@ if $fullrun; then
     echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables)"
     apt update
     apt upgrade
-    apt install batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables 
+    apt install -y batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables 
 
     echo "- batman-adv Kernelmodul Autostart aktivieren und sofort laden"
     ## batman-adv Kernel-Modul aktivieren (nach Neustart)

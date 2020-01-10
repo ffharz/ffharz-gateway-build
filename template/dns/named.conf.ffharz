@@ -1,0 +1,13 @@
+//Zone declarations for Freifunk Harz e.V.
+//europe.pool.ntp.org wegen router hinzugefügt
+
+zone "ffharz" {
+  type master;
+  notify no;
+  file "/etc/bind/db.ffharz";
+};
+
+zone "<domain>.10.in-addr.arpa" {
+  type master;
+  file "/etc/bind/db.<domain.10";
+};

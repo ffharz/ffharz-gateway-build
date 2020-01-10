@@ -119,7 +119,7 @@ echo "- bind9 Konfiguration anpassen"
 sed -i "s/<domain>/${config[domain]}/g" config/dns/named.conf.options
 sed -i "s/<domain>/${config[domain]}/g" config/dns/named.conf.ffharz
 sed -i "s/<domain>/${config[domain]}/g" config/dns/db.ffharz
-sed -i "s/<ffip>/${config[ffip]}/g" config/dns/db.ffharz
+sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/dns/db.ffharz
 sed -i "s/<domain>/${config[domain]}/g" config/dns/db.x.10
 
 if $fullrun; then 
@@ -167,8 +167,8 @@ if $fullrun; then
     cp config/dns/db.ffharz /etc/bind/db.ffharz
     cp config/dns/db.x.10 /etc/bind/db.${config[domain]}.10
 
-    echo "include \"/etc/bind/named.conf.ffharz\";" >> named.conf.local
-    echo "include \"/etc/bind/zones.rfc1918\";" >> named.conf.local
+    echo "include \"/etc/bind/named.conf.ffharz\";" >> /etc/bind/named.conf.local
+    echo "include \"/etc/bind/zones.rfc1918\";" >> /etc/bind/named.conf.local
 
     ## Firewall-Regeln laden
 

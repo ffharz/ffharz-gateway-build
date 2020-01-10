@@ -12,7 +12,7 @@ $TTL 2D
 @       IN      NS      ns.ffharz.
 ns                      IN      A       10.<domain>.0.10
 @                       IN      A       10.<domain>.0.10
-@                       IN      AAAA    <ffip>
+@                       IN      AAAA    <ffipv6>
 
 localhost               IN      A       127.0.0.1
                         IN      AAAA    ::1
@@ -24,25 +24,25 @@ knoten                  IN      A       10.<domain>.0.9
 www.knoten              IN      AAAA    fd0e:8db3:d50a::9
 www.knoten              IN      A       10.<domain>.0.9
 ns                      IN      A       10.<domain>.0.10
-ns                      IN      AAAA    <ffip>
+ns                      IN      AAAA    <ffipv6>
 1.<domain>.gw           IN      A       10.<domain>.0.1
-1.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>1
+1.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f0<domain>1
 2.<domain>.gw           IN      A       10.<domain>.0.2
-2.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>2
+2.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f0<domain>2
 3.<domain>.gw           IN      A       10.<domain>.0.3
-3.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>3
+3.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f0<domain>3
 4.<domain>.gw           IN      A       10.<domain>.0.4
-4.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>4
+4.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f0<domain>4
 5.<domain>.gw           IN      A       10.<domain>.0.5
-5.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>5
+5.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f0<domain>5
 6.<domain>.gw           IN      A       10.<domain>.0.6
-6.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>6
+6.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f0<domain>6
 7.<domain>.gw           IN      A       10.<domain>.0.7
-7.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>7
+7.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f0<domain>7
 8.<domain>.gw           IN      A       10.<domain>.0.8
-8.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f<domain>8
-mirror                  IN      AAAA    <ffip>
+8.<domain>.gw           IN      AAAA    fd0e:8db3:d50a::f0<domain>8
+mirror                  IN      AAAA    <ffipv6>
 mirror                  IN      A       10.<domain>.0.10
 
-domain;Domains von User
+;;Domains von User
 ;; pad.service             IN      CNAME   pad

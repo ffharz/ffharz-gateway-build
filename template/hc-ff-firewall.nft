@@ -18,10 +18,10 @@ add rule ip filter INPUT iifname "ens10" accept
 ## Alle privaten IP-Bereiche, ausser dem FF-Netz, von br-ffharz verwerfen
 add rule ip filter INPUT iifname "br-ffharz" ip saddr != $net_ipv4_ff counter drop
 
-## DNS, SSH und PING aus FF-Netz an lokalen Server erlauben
+## Ping, DNS und respondd aus FF-Netz an lokalen Server erlauben
 add rule ip filter INPUT iifname "br-ffharz" icmp type echo-request accept
 add rule ip filter INPUT iifname "br-ffharz" udp dport domain accept
-# add rule ip filter INPUT iifname "br-ffharz" tcp dport ssh accept
+add rule ip filter INPUT iifname "br-ffharz" udb dport 1001 accept
 
 add rule ip filter INPUT iifname "eth0" icmp type echo-request accept
 #add rule ip filter INPUT iifname "eth0" udp dport domain accept

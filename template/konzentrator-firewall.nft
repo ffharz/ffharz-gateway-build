@@ -17,6 +17,7 @@ add rule ip filter INPUT iifname "eth0" tcp dport 65333 accept
 add rule ip filter INPUT iifname "eth0" icmp type echo-request accept
 add rule ip filter INPUT iifname "eth0" tcp dport 80 accept
 add rule ip filter INPUT iifname "eth0" tcp dport 443 accept
+add rule ip filter INPUT iifname "eth0" udp dport 10001 accept
 
 ## Eingehnde Dienste aus FF-Netz erlauben
 #add rule ip filter INPUT iifname "br-ffharz" tcp dport 65333 accept

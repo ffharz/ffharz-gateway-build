@@ -23,7 +23,18 @@ Folgende Zeilen einfügen:
 
 #### Software-Raid mit 2 Festplatten
 
-ToDo
+Folgende Konfiguration verwenden:
+
+    PART /boot ext3 4G
+    PART lvm vg0 116G
+    PART lvm vg1 all
+
+    LV vg0 root / ext3 100G
+    LV vg0 swap swap swap 16G
+    LV vg1 vz /var/lib/vz ext3 all
+
+Mit dem Befehl *cat /proc/mdstat* kann der Status der Initialisierung ausgegeben werden.
+Mit dem Befehl *mdadm -D /dev/md1* können weitere Details über ein Array ausgegeben werden
 
 ## Grundkonfiguration
 
@@ -31,16 +42,7 @@ ToDo
 
 root Password mit *passwd* ändern (bspw. 20 Zeichen). Dies wird für den Login auf der Proxmox Konfigurationsoberfläche benötigt.
 
-### Packetquellen anpassen
-
-Packetquellen für Proxmox hinzufügen:
-
-    echo "deb http://download.proxmox.com/debian buster pve-no-subscription" >> /etc/apt/sources.list
-    wget -q http://download.proxmox.com/debian/proxmox-ve-release-6.x.gpg -O /etc/apt/trusted.gpg.d/proxmox-ve-release-6.x.gpg
-    apt update
-    apt upgrade
-
-### Storage anlegen
+### Storage anlegen (bei Hardware-RAID)
 
 Daten-Speicher für virtuelle Maschinen anlegen. Die Größe kann/sollte entsprechend der Gegebenheiten angepasst werden.
 
@@ -124,10 +126,10 @@ Um auf Basis von Debian eine VM zu erstellen muss noch die entsprechende ISO (Li
 
 Damit ein bestimmter Port zur VM weitergeleitet wird, muss für jede VM jeweils folgendes in die */etc/network/interfaces* in dem unter Netzwerk eingefügten Teil unter der NAT-Regel eingefügt werden:
 
-    post-up iptables -t nat -A PREROUTING -i enp4s0 -p tcp --dport 10101 -j DNAT --to 192.168.1.1:10101
-    post-down iptables -t nat -D PREROUTING -i enp4s0 -p tcp --dport 10101 -j DNAT --to 192.168.1.1:10101
+    post-up iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 10101 -j DNAT --to 192.168.1.1:10101
+    post-down iptables -t nat -D PREROUTING -i eth0 -p tcp --dport 10101 -j DNAT --to 192.168.1.1:10101
 
-Wobei *enp4s0* die phys. Netzwerkkarte, *10101* der Zielport und *192.168.1.1* die IP der VM ist. Dies sollte entsprechend der Gegebenheiten angepasst werden.
+Wobei *eth0* die phys. Netzwerkkarte, *10101* der Zielport und *192.168.1.1* die IP der VM ist. Dies sollte entsprechend der Gegebenheiten angepasst werden.
 
 ## Abschluss
 

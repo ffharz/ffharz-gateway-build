@@ -80,7 +80,7 @@ echo "- Konfigurationsdateien für fastd anpassen"
 mkdir config/fastd/backbone/gateway
 
 ## FastD-Config anpassen
-sed -i "s/10000/${config[fastdbbport]}/g" config/fastd/backbone/fastd.conf
+sed -i "s/10001/${config[fastdbbport]}/g" config/fastd/backbone/fastd.conf
 sed -i "s/0.0.0.0/${config[ip]}/g" config/fastd/backbone/fastd.conf
 sed -i "s/00:00:00:00:00:00/${config[bbmac]}/g" config/fastd/backbone/fastd.conf
 

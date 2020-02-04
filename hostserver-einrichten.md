@@ -34,7 +34,7 @@ Folgende Konfiguration verwenden:
     LV vg1 vz /var/lib/vz ext3 all
 
 Mit dem Befehl *cat /proc/mdstat* kann der Status der Initialisierung ausgegeben werden.
-Mit dem Befehl *mdadm -D /dev/md1* können weitere Details über ein Array ausgegeben werden
+Mit dem Befehl *mdadm -D /dev/mdX* können weitere Details über ein Array ausgegeben werden
 
 ## Grundkonfiguration
 
@@ -82,7 +82,9 @@ Der einfachheit halber wird der Name der Netzwerkkarte auf eth0 geändert:
     sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"net.ifnames=0 biosdevname=0\"/g" /etc/default/grub
     grub-mkconfig -o /boot/grub/grub.cfg
 
-Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden. Die Bridge erzeugt quasi ein "internes" Netzwerk, an der alle VM's angebunden sind. Dem Netzwerk geben wir den IP-Bereich 192.168.0.0/16 und aktivieren NAT, damit die VM's auch das Internet erreichen. Dafür muss folgendes in die */etc/network/interfaces* hinzugefügt werden:
+Wichtig, es muss anschließend in der */etc/network/interfaces* der Adaptername mit *eth0* ersetzt werden.
+
+Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden. Die Bridge erzeugt quasi ein "internes" Netzwerk, an der alle VM's angebunden sind. Dem Netzwerk geben wir den IP-Bereich 192.168.0.0/16 und aktivieren NAT, damit die VM's auch das Internet erreichen. Dafür wird die Datei */etc/network/interfaces/vmbr0.cfg* mit folgendem Inhalt erstellt:
 
     auto vmbr0
     iface vmbr0 inet static

@@ -104,6 +104,7 @@ echo "- Public-Keys der Gateways der gleichen Domäne anlegen"
 
 ## Variable für DNS-Server in der Domäne
 DNSSERVER=${config[ffip]}
+DNSSERVERv6=${config[ffipv6]}
 
 OLDIFS=$IFS
 IFS=';'
@@ -114,21 +115,24 @@ do
         echo "key \"$fastdbbpub\";" > config/fastd/backbone/gateway/$name
         echo "remote \"$dns\" port $fastdbbport;" >> config/fastd/backbone/gateway/$name
         DNSSERVER+=", $ffip"
+        DNSSERVERv6+=" $ffipv6"
     fi
 
 done < $INPUT
 IFS=$OLDIFS
 
+## Netzwerkbridge br-ffharz anpassen
+echo "- Netzwerkbridge br-ffharz vorbereiten"
+sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/99-ff-bridge.cfg
+sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/99-ff-bridge.cfg
+sed -i "s/<ipv6-1>/${config[ipv6]::-1}/g" config/99-ff-bridge.cfg
+sed -i "s/<ffip>/${config[ffip]}/g" config/99-ff-bridge.cfg
 
-## IPv6 und Netzwerkbridge in interfaces anpassen
-echo "- Netzwerkkonfiguration vorbereiten (IPv6, br-ffharz)"
+## interfaces (IPv6 und Interface-Name) anpassen
+echo "- Netzwerkkonfiguration vorbereiten (IPv6, eth0)"
 sed -i "s/<ip>/${config[ip]}/g" config/interfaces
 sed -i "s/<ipv6>/${config[ipv6]}/g" config/interfaces
 sed -i "s/<ipv6gw>/${config[ipv6gw]}/g" config/interfaces
-sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/interfaces
-sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/interfaces
-sed -i "s/<ffip>/${config[ffip]}/g" config/interfaces
-
 
 # DHCPd Konfiguration anpassen
 echo "- DHCPd Konfiguration anpassen"
@@ -139,14 +143,8 @@ sed -i "s/<DNSSERVER>/${DNSSERVER}/g" config/dhcpd.conf
 sed -i "s/<ffip>/${config[ffip]}/g" config/dhcpd.conf
 
 ## RADVD Konfiguration anpassen
-## ToDo: IPv6 DNS
-sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/radvd.conf
-
-
-
-## DNS
-## ToDo: muss ggf. noch angepasst werden
-
+sed -i "s/<ipv6-1>/${config[ipv6]::-1}/g" config/radvd.conf
+sed -i "s/<DNSSERVERv6>/${DNSSERVERv6}/g" config/radvd.conf
 
 ##respondd Konfiguration anpassen
 echo "- respondd Konfiguration anpassen"
@@ -154,10 +152,18 @@ sed -i "s/<name>/${config[name]}/g" config/respondd.config.json
 sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
 ## ToDo: Firmware/batman-adv Version in Konfig schreiben
 
+## bind9 Konfiguration anpassen
+echo "- bind9 Konfiguration anpassen"
+sed -i "s/<domain>/${config[domain]}/g" config/dns/named.conf.options
+sed -i "s/<domain>/${config[domain]}/g" config/dns/named.conf.ffharz
+sed -i "s/<domain>/${config[domain]}/g" config/dns/db.ffharz
+sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/dns/db.ffharz
+sed -i "s/<domain>/${config[domain]}/g" config/dns/db.x.10
+
 ## Firewall anpassen
 echo "- Firewall Konfiguration anpassen"
-sed -i "s/<dhcprange-3>/${config[dhcprange]::-3}/g" config/nftables.sh
 sed -i "s/<dhcprange-3>/${config[dhcprange]::-3}/g" config/ff-firewall.nft
+## Todo: bisher nur IPv4 Regeln. Anpassung auf IPv6
 
 
 if $fullrun; then 
@@ -166,7 +172,7 @@ if $fullrun; then
     echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables)"
     apt update
     apt upgrade
-    apt install batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables
+    apt install batctl fastd bridge-utils isc-dhcp-server radvd python3-netifaces nftables bind9
 
     echo "- batman-adv Kernelmodul Autostart aktivieren und sofort laden"
     ## batman-adv Kernel-Modul aktivieren (nach Neustart)
@@ -195,6 +201,9 @@ if $fullrun; then
     cp /etc/network/interfaces /etc/network/interfaces.old
     cat config/interfaces > /etc/network/interfaces
 
+    echo "- Netzwerk Konfiguration nach /etc/network/interfaces.d/99-ff-bridge.cfg kopieren"
+    cat config/99-ff-bridge.cfg > /etc/network/interfaces.d/99-ff-bridge.cfg
+
     ## DHCPv4 konfigurieren
     echo "- DHCPd an br-ffharz binden und Konfigurationsdateien nach /etc/dhcp/ kopieren"
     sed -i "s/INTERFACESv4=\"\"/INTERFACESv4=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
@@ -209,10 +218,14 @@ if $fullrun; then
     cat config/radvd.conf > /etc/radvd.conf
     systemctl enable radvd
 
-    ## DNS konfigurieren
-    echo "- dnsmasq Konfigurationsdatei nach /etc kopieren"
-    cp /etc/dnsmasq.conf /etc/dnsmasq.conf.old
-    cat config/dnsmasq.conf > /etc/dnsmasq.conf
+    ## bind9 einrichten
+    cp config/dns/named.conf.options /etc/bind/named.conf.options
+    cp config/dns/named.conf.ffharz /etc/bind/named.conf.ffharz
+    cp config/dns/db.ffharz /etc/bind/db.ffharz
+    cp config/dns/db.x.10 /etc/bind/db.${config[domain]}.10
+
+    echo "include \"/etc/bind/named.conf.ffharz\";" >> /etc/bind/named.conf.local
+    echo "include \"/etc/bind/zones.rfc1918\";" >> /etc/bind/named.conf.local
 
     ## respondd installieren
     echo "- respondd installieren, konfigurieren und Autostart einrichten"
@@ -230,7 +243,7 @@ if $fullrun; then
     
     if [ ! -d "/etc/nftables" ] ; then 
         mkdir /etc/nftables/
-        echo "include /etc/nftables/*.nft" >> /etc/nftables.conf
+        echo "include \"/etc/nftables/*.nft\"" >> /etc/nftables.conf
     fi
 
     cp config/ff-firewall.nft /etc/nftables/ff-firewall.nft
@@ -239,8 +252,8 @@ if $fullrun; then
     systemctl enable nftables.service
     
     ## SSH-zugang auf Port 65333 legen
-    echo "- SSH Port auf 65333 legen"
-    sed -i "s/#Port 22/Port 65333/g" /etc/ssh/sshd_config        
+    #echo "- SSH Port auf 65333 legen"
+    #sed -i "s/#Port 22/Port 65333/g" /etc/ssh/sshd_config        
 
     ## IP Forwarding aktivieren
     echo "- IPForwarding aktivieren"

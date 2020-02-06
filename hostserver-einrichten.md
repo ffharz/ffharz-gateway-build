@@ -109,6 +109,8 @@ Dafür ist in der Datei */etc/sysctl.d/99-hetzner.conf* und/oder */etc/sysctl.co
     net.ipv4.ip_forward=1
     net.ipv6.conf.all.forwarding=1
 
+Das erfolgreiche setzen der Werte kann mit *sysctl -p* überprüft werden.
+
 ### Firewall
 
 Es sollten alle Port's außer der SSH-Port (65333), ICMP und die fastd-Port gesperrt werden. Die zugelassenen Port's legt man in der Proxmox-Oberfläche unter Rechenzentrum->Firewall an.  

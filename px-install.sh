@@ -115,7 +115,7 @@ do
         echo "key \"$fastdbbpub\";" > config/fastd/backbone/gateway/$name
         echo "remote \"$dns\" port $fastdbbport;" >> config/fastd/backbone/gateway/$name
         DNSSERVER+=", $ffip"
-        DNSSERVERv6+=" $ffipv6"
+        #DNSSERVERv6+=" $ffipv6"
     fi
 
 done < $INPUT
@@ -172,7 +172,7 @@ if $fullrun; then
     echo "- Paketquellen aktualisieren und notwendige Pakete installieren (batctl fastd bridge-utils isc-dhcp-server radvd dnsmasq python3-netifaces nftables)"
     apt update
     apt upgrade
-    apt install batctl fastd bridge-utils isc-dhcp-server radvd python3-netifaces nftables bind9
+    apt install batctl fastd bridge-utils isc-dhcp-server radvd python3-netifaces nftables bind9 net-tools
 
     echo "- batman-adv Kernelmodul Autostart aktivieren und sofort laden"
     ## batman-adv Kernel-Modul aktivieren (nach Neustart)

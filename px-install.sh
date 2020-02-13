@@ -251,9 +251,10 @@ if $fullrun; then
     echo "- nftable Firewall Autostart einrichten"
     systemctl enable nftables.service
     
-    ## SSH-zugang auf Port 65333 legen
-    #echo "- SSH Port auf 65333 legen"
-    #sed -i "s/#Port 22/Port 65333/g" /etc/ssh/sshd_config        
+    ## SSH-zugang auf auf interne legen
+    echo "- SSH ListenAdress auf interne IP legen"
+    sed -i "s/#AddressFamily any/AddressFamily inet/g" /etc/ssh/sshd_config        
+    sed -i "s/#ListenAddress 0.0.0.0/ListenAddress ${config[ip]}/g" /etc/ssh/sshd_config        
 
     ## IP Forwarding aktivieren
     echo "- IPForwarding aktivieren"

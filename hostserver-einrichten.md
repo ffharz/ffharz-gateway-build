@@ -23,7 +23,18 @@ Folgende Zeilen einfügen:
 
 #### Software-Raid mit 2 Festplatten
 
-ToDo
+Folgende Konfiguration verwenden:
+
+    PART /boot ext3 4G
+    PART lvm vg0 116G
+    PART lvm vg1 all
+
+    LV vg0 root / ext3 100G
+    LV vg0 swap swap swap 16G
+    LV vg1 vz /var/lib/vz ext3 all
+
+Mit dem Befehl *cat /proc/mdstat* kann der Status der Initialisierung ausgegeben werden.
+Mit dem Befehl *mdadm -D /dev/mdX* können weitere Details über ein Array ausgegeben werden
 
 ## Grundkonfiguration
 
@@ -31,16 +42,7 @@ ToDo
 
 root Password mit *passwd* ändern (bspw. 20 Zeichen). Dies wird für den Login auf der Proxmox Konfigurationsoberfläche benötigt.
 
-### Packetquellen anpassen
-
-Packetquellen für Proxmox hinzufügen:
-
-    echo "deb http://download.proxmox.com/debian buster pve-no-subscription" >> /etc/apt/sources.list
-    wget -q http://download.proxmox.com/debian/proxmox-ve-release-6.x.gpg -O /etc/apt/trusted.gpg.d/proxmox-ve-release-6.x.gpg
-    apt update
-    apt upgrade
-
-### Storage anlegen
+### Storage anlegen (bei Hardware-RAID)
 
 Daten-Speicher für virtuelle Maschinen anlegen. Die Größe kann/sollte entsprechend der Gegebenheiten angepasst werden.
 
@@ -75,35 +77,68 @@ Anschließend kann die Konfiguration dem eigenen Sicherheitsanspruch angepasst w
 
 ### Netzwerk
 
+Es wird ein zusätzliches /56 IPv6 Subnetz (in diesem Beispiel 2a01:affe:affe:ff00::/56) von Hetzner (einmalig 49€) benötigt. Dies kann man einfach per Ticket zu jedem Server buchen.
+
 Der einfachheit halber wird der Name der Netzwerkkarte auf eth0 geändert:
 
     sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"net.ifnames=0 biosdevname=0\"/g" /etc/default/grub
     grub-mkconfig -o /boot/grub/grub.cfg
 
-Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden. Die Bridge erzeugt quasi ein "internes" Netzwerk, an der alle VM's angebunden sind. Dem Netzwerk geben wir den IP-Bereich 192.168.0.0/16 und aktivieren NAT, damit die VM's auch das Internet erreichen. Dafür muss folgendes in die */etc/network/interfaces* hinzugefügt werden:
+Wichtig, es muss anschließend in der */etc/network/interfaces* der Adaptername mit *eth0* ersetzt werden.
+
+Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden. Die Bridge erzeugt quasi ein "internes" Netzwerk, an der alle VM's angebunden sind. Dem Netzwerk geben wir den IP-Bereich 192.168.0.0/16 und aktivieren NAT, damit die VM's auch das Internet erreichen. Nachfolgend eine Beispiel */etc/network/interfaces*:
+
+    source /etc/network/interfaces.d/*
+
+    auto lo
+    iface lo inet loopback
+
+    iface lo inet6 loopback
+
+    auto eth0
+    iface eth0 inet static
+            address  x.x.x.x
+            netmask  x
+            gateway  x.x.x.x
+            up route add -net x.x.x.x netmask 255.255.255.224 gw x.x.x.x dev eth0
+
+    iface eth0 inet6 static
+            address  2a01:4f8:201:82a2::2
+            netmask  128
+            gateway  fe80::1
+            # zusätzliche IPv6 aus zusätzlichem Subnet auf eth0 binden
+            up ip addr add 2a01:affe:affe:ff00::2/128 dev eth0
+            up sysctl -p
 
     auto vmbr0
     iface vmbr0 inet static
-        address  192.168.0.1
-        netmask  16
-        bridge-ports none
-        bridge-stp off
-        bridge-fd 0
+            address  192.168.0.1
+            netmask  16
+            bridge-ports none
+            bridge-stp off
+            bridge-fd 0
 
-        #NAT aktivieren
-        post-up iptables -A POSTROUTING -t nat -j MASQUERADE
+            # Ausgehende IPv4 Pakete maskieren
+            post-up iptables -A POSTROUTING -t nat -j MASQUERADE
+
+            # Port-Forwarding (fastd-Tunnel) zu VM (siehe unten)
+            post-up iptables -t nat -A PREROUTING -i eth0 -p udp --dport 10101 -j DNAT --to 192.168.1.1:10101
+            post-down iptables -t nat -D PREROUTING -i eth0 -p udp --dport 10101 -j DNAT --to 192.168.1.1:10101
 
     iface vmbr0 inet6 static
-        # IPv6 des Servers +1 eintragen
-        address  2a01:4f8:xxx:xxxx::3
-        netmask  64
-        up ip -6 route add 2a01:4f8:xxx:xxxx::/64 dev vmbr0
+            # zusätzliches v6 Subnetz an Bridge binden
+            address  2a01:4f8:201:6f00::2
+            netmask  56
+            # IPv6 Route eines /64 Netzes zu einer VM, welche dieses Netz per SLAAC verteilen kann...
+            up ip route add 2a01:4f8:201:6f11::/64 via 2a01:4f8:201:6f11::2
 
 Anschließend muss noch das IP-Forwarding aktivieren, damit die Pakete auch weitergeleitet werden.
 Dafür ist in der Datei */etc/sysctl.d/99-hetzner.conf* und/oder */etc/sysctl.conf* folgendes einzustellen:
 
     net.ipv4.ip_forward=1
     net.ipv6.conf.all.forwarding=1
+
+Das erfolgreiche setzen der Werte kann mit *sysctl -p* überprüft werden.
 
 ### Firewall
 
@@ -124,10 +159,10 @@ Um auf Basis von Debian eine VM zu erstellen muss noch die entsprechende ISO (Li
 
 Damit ein bestimmter Port zur VM weitergeleitet wird, muss für jede VM jeweils folgendes in die */etc/network/interfaces* in dem unter Netzwerk eingefügten Teil unter der NAT-Regel eingefügt werden:
 
-    post-up iptables -t nat -A PREROUTING -i enp4s0 -p tcp --dport 10101 -j DNAT --to 192.168.1.1:10101
-    post-down iptables -t nat -D PREROUTING -i enp4s0 -p tcp --dport 10101 -j DNAT --to 192.168.1.1:10101
+    post-up iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 10101 -j DNAT --to 192.168.1.1:10101
+    post-down iptables -t nat -D PREROUTING -i eth0 -p tcp --dport 10101 -j DNAT --to 192.168.1.1:10101
 
-Wobei *enp4s0* die phys. Netzwerkkarte, *10101* der Zielport und *192.168.1.1* die IP der VM ist. Dies sollte entsprechend der Gegebenheiten angepasst werden.
+Wobei *eth0* die phys. Netzwerkkarte, *10101* der Zielport und *192.168.1.1* die IP der VM ist. Dies sollte entsprechend der Gegebenheiten angepasst werden.
 
 ## Abschluss
 

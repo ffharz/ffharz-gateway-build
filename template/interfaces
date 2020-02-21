@@ -19,31 +19,3 @@ iface eth0 inet6 static
   address <ipv6>
   netmask 64
   gateway <ipv6gw>
-
-auto br-ffharz
-iface br-ffharz inet6 static
-    bridge-ports none
-    address <ffipv6>
-    netmask 48
- 
-    post-up ip addr add <ipv6>/64 dev br-ffharz
-    post-up ip route add <ipv6gw-1>/64 dev br-ffharz
-    pre-down ip addr del <ipv6>/64 dev br-ffharz
-    pre-down ip route del <ipv6gw-1>/64 dev br-ffharz
- 
-iface br-ffharz inet static
-    address <ffip>
-    netmask 255.255.0.0
- 
-allow-hotplug bat0
-iface bat0 inet6 manual
-    pre-up modprobe batman-adv
-    pre-up batctl if add mesh-vpn
-    pre-up batctl gw server
-    up ip link set $IFACE up
-    post-up brctl addif br-ffharz $IFACE
-    post-up batctl it 10000
-    post-up batctl gw server 1000MBit/1000MBit
- 
-    pre-down brctl delif br-ffharz $IFACE || true
-    down ip link set $IFACE down

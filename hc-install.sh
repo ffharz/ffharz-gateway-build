@@ -122,6 +122,7 @@ IFS=$OLDIFS
 echo "- Netzwerkkonfiguration vorbereiten (IPv6, br-ffharz)"
 sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/99-ff-bridge.cfg
 sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/99-ff-bridge.cfg
+sed -i "s/<ipv6-1>/${config[ipv6gw]::-1}/g" config/99-ff-bridge.cfg
 sed -i "s/<ffip>/${config[ffip]}/g" config/99-ff-bridge.cfg
 
 
@@ -135,7 +136,7 @@ sed -i "s/<ffip>/${config[ffip]}/g" config/dhcpd.conf
 
 ## RADVD Konfiguration anpassen
 ## ToDo: IPv6 DNS
-sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/radvd.conf
+sed -i "s/<ipv6-1>/${config[ipv6gw]::-1}/g" config/radvd.conf
 sed -i "s/<DNSSERVERv6>/${DNSSERVERv6}/g" config/radvd.conf
 
 ##respondd Konfiguration anpassen
@@ -219,8 +220,7 @@ if $fullrun; then
     cp config/hc-ff-firewall.nft /etc/nftables/ff-firewall.nft
 
     echo "- nftable Firewall Autostart einrichten"
-    systemctl enable nftables.service
-    
+    systemctl enable nftables.service 
 
     ## SSH-zugang auf Port 65333 legen
     echo "- SSH Port auf 65333 legen"

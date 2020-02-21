@@ -77,6 +77,8 @@ Anschließend kann die Konfiguration dem eigenen Sicherheitsanspruch angepasst w
 
 ### Netzwerk
 
+Es wird ein zusätzliches /56 IPv6 Subnetz (in diesem Beispiel 2a01:affe:affe:ff00::/56) von Hetzner (einmalig 49€) benötigt. Dies kann man einfach per Ticket zu jedem Server buchen.
+
 Der einfachheit halber wird der Name der Netzwerkkarte auf eth0 geändert:
 
     sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"net.ifnames=0 biosdevname=0\"/g" /etc/default/grub
@@ -84,24 +86,51 @@ Der einfachheit halber wird der Name der Netzwerkkarte auf eth0 geändert:
 
 Wichtig, es muss anschließend in der */etc/network/interfaces* der Adaptername mit *eth0* ersetzt werden.
 
-Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden. Die Bridge erzeugt quasi ein "internes" Netzwerk, an der alle VM's angebunden sind. Dem Netzwerk geben wir den IP-Bereich 192.168.0.0/16 und aktivieren NAT, damit die VM's auch das Internet erreichen. Dafür wird die Datei */etc/network/interfaces/vmbr0.cfg* mit folgendem Inhalt erstellt:
+Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden. Die Bridge erzeugt quasi ein "internes" Netzwerk, an der alle VM's angebunden sind. Dem Netzwerk geben wir den IP-Bereich 192.168.0.0/16 und aktivieren NAT, damit die VM's auch das Internet erreichen. Nachfolgend eine Beispiel */etc/network/interfaces*:
+
+    source /etc/network/interfaces.d/*
+
+    auto lo
+    iface lo inet loopback
+
+    iface lo inet6 loopback
+
+    auto eth0
+    iface eth0 inet static
+            address  x.x.x.x
+            netmask  x
+            gateway  x.x.x.x
+            up route add -net x.x.x.x netmask 255.255.255.224 gw x.x.x.x dev eth0
+
+    iface eth0 inet6 static
+            address  2a01:4f8:201:82a2::2
+            netmask  128
+            gateway  fe80::1
+            # zusätzliche IPv6 aus zusätzlichem Subnet auf eth0 binden
+            up ip addr add 2a01:affe:affe:ff00::2/128 dev eth0
+            up sysctl -p
 
     auto vmbr0
     iface vmbr0 inet static
-        address  192.168.0.1
-        netmask  16
-        bridge-ports none
-        bridge-stp off
-        bridge-fd 0
+            address  192.168.0.1
+            netmask  16
+            bridge-ports none
+            bridge-stp off
+            bridge-fd 0
 
-        #NAT aktivieren
-        post-up iptables -A POSTROUTING -t nat -j MASQUERADE
+            # Ausgehende IPv4 Pakete maskieren
+            post-up iptables -A POSTROUTING -t nat -j MASQUERADE
+
+            # Port-Forwarding (fastd-Tunnel) zu VM (siehe unten)
+            post-up iptables -t nat -A PREROUTING -i eth0 -p udp --dport 10101 -j DNAT --to 192.168.1.1:10101
+            post-down iptables -t nat -D PREROUTING -i eth0 -p udp --dport 10101 -j DNAT --to 192.168.1.1:10101
 
     iface vmbr0 inet6 static
-        # IPv6 des Servers +1 eintragen
-        address  2a01:4f8:xxx:xxxx::3
-        netmask  64
-        up ip -6 route add 2a01:4f8:xxx:xxxx::/64 dev vmbr0
+            # zusätzliches v6 Subnetz an Bridge binden
+            address  2a01:4f8:201:6f00::2
+            netmask  56
+            # IPv6 Route eines /64 Netzes zu einer VM, welche dieses Netz per SLAAC verteilen kann...
+            up ip route add 2a01:4f8:201:6f11::/64 via 2a01:4f8:201:6f11::2
 
 Anschließend muss noch das IP-Forwarding aktivieren, damit die Pakete auch weitergeleitet werden.
 Dafür ist in der Datei */etc/sysctl.d/99-hetzner.conf* und/oder */etc/sysctl.conf* folgendes einzustellen:

@@ -124,8 +124,8 @@ IFS=$OLDIFS
 ## Netzwerkbridge br-ffharz anpassen
 echo "- Netzwerkbridge br-ffharz vorbereiten"
 sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/99-ff-bridge.cfg
-sed -i "s/<ipv6gw-1>/${config[ipv6gw]::-1}/g" config/99-ff-bridge.cfg
 sed -i "s/<ipv6-1>/${config[ipv6]::-1}/g" config/99-ff-bridge.cfg
+sed -i "s/<ipv6>/${config[ipv6]}/g" config/99-ff-bridge.cfg
 sed -i "s/<ffip>/${config[ffip]}/g" config/99-ff-bridge.cfg
 
 ## interfaces (IPv6 und Interface-Name) anpassen

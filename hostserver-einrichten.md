@@ -1,4 +1,4 @@
-# Einrichtung eines Proxmox Hostserver für virtuelle Gateways
+# Einrichtung eines Proxmox Hostserver bei Hetzner für virtuelle Gateways
 
 ## Hetzner Config Mode
 
@@ -103,10 +103,10 @@ Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden.
             up route add -net x.x.x.x netmask 255.255.255.224 gw x.x.x.x dev eth0
 
     iface eth0 inet6 static
-            address  2a01:4f8:201:82a2::2
+            address  x:x:x:x::2
             netmask  128
             gateway  fe80::1
-            # zusätzliche IPv6 aus zusätzlichem Subnet auf eth0 binden
+            # zusätzliche IPv6 (am besten die erste Adresse des Subnet) aus zusätzlichem Subnet auf eth0 binden, 
             up ip addr add 2a01:affe:affe:ff00::2/128 dev eth0
             up sysctl -p
 
@@ -127,12 +127,21 @@ Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden.
 
     iface vmbr0 inet6 static
             # zusätzliches v6 Subnetz an Bridge binden
-            address  2a01:4f8:201:6f00::2
+            address  2a01:affe:affe:ff00::2
             netmask  56
             # IPv6 Route eines /64 Netzes zu einer VM, welche dieses Netz per SLAAC verteilen kann...
-            up ip route add 2a01:4f8:201:6f11::/64 via 2a01:4f8:201:6f11::2
+            up ip route add 2a01:affe:affe:ff11::/64 via 2a01:affe:affe:6f11::2
 
-Anschließend muss noch das IP-Forwarding aktivieren, damit die Pakete auch weitergeleitet werden.
+Wenn die VM-Bridge von mehreren Host-Servern über das Hetzner VLAN miteinander verbunden werden sollen muss die */etc/network/interfaces* noch um folgenden Eintrag erweitert werden:
+
+    auto eth0.4000
+    iface eth0.4000 inet manual
+            vlan-raw-device eth0
+            mtu 1400
+
+Und die Bridge vmbr0 muss an die Schnittstelle gebunden werden. Dafür muss der Eintrag *bridge-ports none* in *bridge-ports eth0.4000* 
+
+Abschließend muss noch das IP-Forwarding aktivieren, damit die Pakete auch weitergeleitet werden.
 Dafür ist in der Datei */etc/sysctl.d/99-hetzner.conf* und/oder */etc/sysctl.conf* folgendes einzustellen:
 
     net.ipv4.ip_forward=1

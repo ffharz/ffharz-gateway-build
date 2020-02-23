@@ -25,7 +25,7 @@ INPUT=px-gateways.csv
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
-while read domain nr name dns host ip ipv4gw ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
+while read domain nr name dns host ipv4gw ip ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
     if [ "$HOSTNAME" == "$name" ]; then
         config[domain]=$domain
@@ -33,8 +33,8 @@ do
         config[name]=$name
         config[dns]=$dns
         config[host]=$host
-        config[ip]=$ip
         config[ipv4gw]=$ipv4gw
+        config[ip]=$ip
         config[ffip]=$ffip
         config[ipv6]=$ipv6
         config[ipv6gw]=$ipv6gw
@@ -110,7 +110,7 @@ DNSSERVERv6=${config[ffipv6]}
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
-while read domain nr name dns host ip ipv4gw ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
+while read domain nr name dns host ipv4gw ip ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
     if [ "${config[domain]}" == "$domain" ] && [ "$HOSTNAME" != "$name" ]; then
         echo "key \"$fastdbbpub\";" > config/fastd/backbone/gateway/$name

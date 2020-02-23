@@ -25,7 +25,7 @@ INPUT=px-gateways.csv
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
-while read domain nr name dns host ip ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
+while read domain nr name dns host ip ipv4gw ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
     if [ "$HOSTNAME" == "$name" ]; then
         config[domain]=$domain
@@ -34,6 +34,7 @@ do
         config[dns]=$dns
         config[host]=$host
         config[ip]=$ip
+        config[ipv4gw]=$ipv4gw
         config[ffip]=$ffip
         config[ipv6]=$ipv6
         config[ipv6gw]=$ipv6gw
@@ -109,7 +110,7 @@ DNSSERVERv6=${config[ffipv6]}
 OLDIFS=$IFS
 IFS=';'
 [ ! -f $INPUT ] && { echo "$INPUT Datei nicht gefunden!"; exit 99; }
-while read domain nr name dns host ip ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
+while read domain nr name dns host ip ipv4gw ffip ipv6 ipv6gw ffipv6 fastdport fastdbbport bbmac v4mac v6mac dhcprange dhcpstart dhcpend fastdbbsec fastdbbpub fastdsec fastdpub
 do
     if [ "${config[domain]}" == "$domain" ] && [ "$HOSTNAME" != "$name" ]; then
         echo "key \"$fastdbbpub\";" > config/fastd/backbone/gateway/$name
@@ -131,6 +132,7 @@ sed -i "s/<ffip>/${config[ffip]}/g" config/99-ff-bridge.cfg
 ## interfaces (IPv6 und Interface-Name) anpassen
 echo "- Netzwerkkonfiguration vorbereiten (IPv6, eth0)"
 sed -i "s/<ip>/${config[ip]}/g" config/interfaces
+sed -i "s/<ipv4gw>/${config[ipv4gw]}/g" config/interfaces
 sed -i "s/<ipv6>/${config[ipv6]}/g" config/interfaces
 sed -i "s/<ipv6gw>/${config[ipv6gw]}/g" config/interfaces
 
@@ -212,7 +214,7 @@ if $fullrun; then
     cp /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.old
     cat config/dhcpd.conf > /etc/dhcp/dhcpd.conf
 
-    ## DHCPv6 konfigurieren
+    ## radvd konfigurieren
     echo "- radvd Konfigurationsdatei nach /etc kopieren"
     cp /etc/radvd.conf /etc/radvd.conf.old
     cat config/radvd.conf > /etc/radvd.conf

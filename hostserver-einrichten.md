@@ -119,7 +119,7 @@ Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden.
             bridge-fd 0
 
             # Ausgehende IPv4 Pakete maskieren
-            post-up iptables -A POSTROUTING -t nat -j MASQUERADE
+            post-up iptables -A POSTROUTING -t nat -o eth0 -j MASQUERADE
 
             # Port-Forwarding (fastd-Tunnel) zu VM (siehe unten)
             post-up iptables -t nat -A PREROUTING -i eth0 -p udp --dport 10101 -j DNAT --to 192.168.1.1:10101
@@ -162,7 +162,7 @@ Am besten das ganze mal bei einem bereits bestehenden Proxmox anschauen...
 Um auf Basis von Debian eine VM zu erstellen muss noch die entsprechende ISO (Link evtl. anpassen) runtergeladen werden. Dies geht einfach mit:
 
     cd /var/lib/vz/template/iso
-    wget https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.2.0-amd64-netinst.iso
+    wget https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.3.0-amd64-netinst.iso
 
 ### Port-Forwarding
 

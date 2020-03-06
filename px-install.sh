@@ -209,7 +209,7 @@ if $fullrun; then
     ## DHCPv4 konfigurieren
     echo "- DHCPd an br-ffharz binden und Konfigurationsdateien nach /etc/dhcp/ kopieren"
     sed -i "s/INTERFACESv4=\"\"/INTERFACESv4=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
-    sed -i "s/INTERFACESv6=\"\"/INTERFACESv6=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
+    sed -i "s/INTERFACESv6=\"\"/#INTERFACESv6=\"br-ffharz\"/g" /etc/default/isc-dhcp-server
     touch /etc/dhcp/static.conf
     cp /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.old
     cat config/dhcpd.conf > /etc/dhcp/dhcpd.conf

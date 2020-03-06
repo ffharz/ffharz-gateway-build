@@ -139,7 +139,7 @@ Wenn die VM-Bridge von mehreren Host-Servern über das Hetzner VLAN miteinander 
             vlan-raw-device eth0
             mtu 1400
 
-Und die Bridge vmbr0 muss an die Schnittstelle gebunden werden. Dafür muss der Eintrag *bridge-ports none* in *bridge-ports eth0.4000* 
+Und die Bridge vmbr0 muss an die Schnittstelle gebunden werden. Dafür muss der Eintrag *bridge-ports none* in *bridge-ports eth0.4000*
 
 Abschließend muss noch das IP-Forwarding aktivieren, damit die Pakete auch weitergeleitet werden.
 Dafür ist in der Datei */etc/sysctl.d/99-hetzner.conf* und/oder */etc/sysctl.conf* folgendes einzustellen:

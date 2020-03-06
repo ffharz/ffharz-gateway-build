@@ -1,24 +1,12 @@
 {
-    "batman": "bat0",
-    "bridge": "br-ffharz",
-    "mesh-vpn": [ "mesh-vpn" ],
-    "mesh-wlan": [ "mesh0" ],
-    "nodeinfo": {
-      "network": {
-          "mac":  "<bbmac>"
-      },
-      "node_id": "<name>",
+  "batman": "bat0",
+  "bridge": "br-ffharz",
+  "nodeinfo": {
       "owner": {
           "contact": "technik@harz.freifunk.net"
       },
-      "software": {
-        "firmware": {
-          "release": ""
-        }
-      },
       "system": {
-        "site_code": "ffharz"
-      },
-          "vpn": true
-    }
+          "site_code": "ffharz_SITE"
+      }
   }
+}

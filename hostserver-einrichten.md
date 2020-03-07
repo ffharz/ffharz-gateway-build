@@ -101,6 +101,7 @@ Es muss eine Netzwerk-Bridge angelegt werden, an der die VM's angebunden werden.
             netmask  x
             gateway  x.x.x.x
             up route add -net x.x.x.x netmask 255.255.255.224 gw x.x.x.x dev eth0
+            post-up iptables -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o eth0 -j TCPMSS --set-mss 1360
 
     iface eth0 inet6 static
             address  x:x:x:x::2

@@ -1,6 +1,8 @@
 #!/bin/bash
 #/usr/lib/check_mk_agent/local
 ## Orginal von https://raw.githubusercontent.com/eulenfunk/check_mk/master/supernode angepasst für Freifunk Harz
+## install: apt install netcat-opensbsd
+## needs script https://raw.githubusercontent.com/eulenfunk/scripts/master/dhcpleases at /opt/
 export LANG=de_DE.UTF-8
 
 function confline # get first line from file $1 mathing $2, stripped of # and ; comment lines, stripped spaces and tabs down to spaces, remove trailing ;

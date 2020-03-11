@@ -128,6 +128,8 @@ sed -i "s/<ffipv6>/${config[ffipv6]}/g" config/99-ff-bridge.cfg
 sed -i "s/<ipv6-1>/${config[ipv6]::-1}/g" config/99-ff-bridge.cfg
 sed -i "s/<ipv6>/${config[ipv6]}/g" config/99-ff-bridge.cfg
 sed -i "s/<ffip>/${config[ffip]}/g" config/99-ff-bridge.cfg
+sed -i "s/<domain>/${config[domain]}/g" config/99-ff-bridge.cfg
+sed -i "s/<nr>/${config[nr]}/g" config/99-ff-bridge.cfg
 
 ## interfaces (IPv6 und Interface-Name) anpassen
 echo "- Netzwerkkonfiguration vorbereiten (IPv6, eth0)"
@@ -150,8 +152,8 @@ sed -i "s/<DNSSERVERv6>/${DNSSERVERv6}/g" config/radvd.conf
 
 ##respondd Konfiguration anpassen
 echo "- respondd Konfiguration anpassen"
-sed -i "s/<name>/${config[name]}/g" config/respondd.config.json
-sed -i "s/<bbmac>/${config[bbmac]}/g" config/respondd.config.json
+sed -i "s/<domain>/${config[domain]}/g" config/respondd.config.json
+sed -i "s/<nr>/${config[nr]}/g" config/respondd.config.json
 ## ToDo: Firmware/batman-adv Version in Konfig schreiben
 
 ## bind9 Konfiguration anpassen

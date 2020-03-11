@@ -2,6 +2,7 @@
   "batman": "bat0",
   "bridge": "br-ffharz",
   "nodeinfo": {
+      "node_id":"eaf3ff0<domain>0<nr>ee",
       "owner": {
           "contact": "technik@harz.freifunk.net"
       },

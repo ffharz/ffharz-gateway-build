@@ -47,7 +47,7 @@ for i in $list; do
   z=$(ls /sys/kernel/debug/batman_adv/$i|wc -l)
   if [ $z -ge 9 ]; then
     b=$(echo $i|cut -d '/' -f1)
-    router=$(($(batctl -m $b o|wc -l)-2 ))
+    router=$(($(batctl -m $b o| grep '*' |wc -l)-2 ))
     clients=$(grep -cEo "\[.*W.*\]+" /sys/kernel/debug/batman_adv/$b/transtable_global)
     gateways=$(( $(batctl -m $b gwl|wc -l) -1 ))
     ips=$(( $(batctl -m $b dc|wc -l) - 2))
@@ -55,7 +55,7 @@ for i in $list; do
     clow=$(( $router * 5 / 100 ))
     wlimit=$(( $router * 5 ))
     climit=$(( $router * 10 ))
-    echo "P Batman-$b Router=$router.0;5:250;1:500|Clients=$clients.0;$wlow.0:$wlimit.0;$clow.0:$climit.0|Gateways=$gateways.0;0:3;0:5;|IPs=$ips.0";
+    echo "P Batman-$b Router=$router.0;5:250;1:500|Clients=$clients.0;$wlow.0:$wlimit.0;$clow.0:$climit.0|Gateways=$gateways.0;0:5;0:8;|IPs=$ips.0";
    fi;
  done
 

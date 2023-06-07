@@ -32,6 +32,7 @@ add rule ip filter INPUT ct state related,established accept
 ## Private Adress-Bereiche nicht weiterleiten
 add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 10.0.0.0/8 counter drop
 add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 192.168.0.0/16 counter drop
+add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 192.0.0.0/24 counter drop
 add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 172.16.0.0/12 counter drop
 add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 169.254.0.0/16 counter drop
 add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 100.64.0.0/10 counter drop

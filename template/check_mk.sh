@@ -51,8 +51,8 @@ for i in $list; do
     clients=$(grep -cEo "\[.*W.*\]+" /sys/kernel/debug/batman_adv/$b/transtable_global)
     gateways=$(( $(batctl -m $b gwl|wc -l) -1 ))
     ips=$(( $(batctl -m $b dc|wc -l) - 2))
-    wlow=$(( $router * 20 / 100 ))
-    clow=$(( $router * 5 / 100 ))
+    wlow=0 #$(( $router * 20 / 100 ))
+    clow=0 #$(( $router * 5 / 100 ))
     wlimit=$(( $router * 5 ))
     climit=$(( $router * 10 ))
     echo "P Batman-$b Router=$router.0;5:250;1:500|Clients=$clients.0;$wlow.0:$wlimit.0;$clow.0:$climit.0|Gateways=$gateways.0;0:5;0:8;|IPs=$ips.0";
@@ -71,8 +71,8 @@ for fasti in $list ; do
   limit=$(confline $fastdp/$fasti/fastd.conf 'peer limit'|cut -d ' ' -f 3|cut -d ';' -f1)
   climit=$(( $limit * 95 / 100 ))
   wlimit=$(( $limit * 90 / 100 ))
-  clow=$(( $limit / 100 ))
-  wlow=$(( $limit * 5 / 100 ))
+  clow=0 #$(( $limit / 100 ))
+  wlow=0 #$(( $limit * 5 / 100 ))
   echo "P Fastd_Clients_$interface Clients=$clients.0;$wlow:$wlimit;$clow:$climit; Interface: $interface, Port: $port, MTU: $mtu, Peer Limit: $limit"
  done
 
@@ -88,7 +88,8 @@ if [ -r /opt/dhcpleases ] ; then
   remainingleases=$(($totalleases - $activeleases))
   actwarn=$(($totalleases * 75 / 100))
   actcrit=$(($totalleases * 90 / 100))
-  echo "P Dhcp-Leases active-leases=$activeleases.0;5:$actwarn;1:$actcrit active:$activeleases remaining:$remainingleases pool=$totalleases";
+  #echo "P Dhcp-Leases active-leases=$activeleases.0;5:$actwarn;1:$actcrit active:$activeleases remaining:$remainingleases pool=$totalleases";
+  echo "P Dhcp-Leases active-leases=$activeleases.0;0:$actwarn;0:$actcrit active:$activeleases remaining:$remainingleases pool=$totalleases";
  fi
 
 

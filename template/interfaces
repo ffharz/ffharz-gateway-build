@@ -14,6 +14,7 @@ iface eth0 inet static
         gateway <ipv4gw>
         # dns-* options are implemented by the resolvconf package, if installed
         dns-nameservers 8.8.8.8
+        mtu 1400
 
 iface eth0 inet6 static
   address <ipv6>

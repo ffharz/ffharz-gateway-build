@@ -1,3 +1,5 @@
+flush ruleset
+
 define net_ipv4_ff = <dhcprange-3>/16
 
 ## filter INPUT ####################################################################
@@ -36,6 +38,10 @@ add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 192.0.0.0
 add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 172.16.0.0/12 counter drop
 add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 169.254.0.0/16 counter drop
 add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 100.64.0.0/10 counter drop
+add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 192.0.2.0/24 counter drop
+add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 198.18.0.0/15 counter drop
+add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 198.51.10.0/24 counter drop
+add rule ip filter FORWARD iifname "br-ffharz" oifname "eth0" ip daddr 203.0.113.0/24 counter drop
 
 add rule ip filter FORWARD ct state invalid counter reject
 add rule ip filter FORWARD ct state related,established accept
